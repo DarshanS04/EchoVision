@@ -14,8 +14,11 @@ import com.visionassist.camera.ObjectDetection.ObjectDetector;
 import com.visionassist.camera.barcode.BarcodeScanner;
 import com.visionassist.core.logger.AppLogger;
 import com.visionassist.core.utils.PermissionUtils;
+import com.visionassist.data.models.DetectionResult;
 import com.visionassist.services.BackgroundProcessingService;
 import com.visionassist.voice.tts.TTSManager;
+
+import java.util.List;
 
 /**
  * Camera activity with three modes: Object Detection, OCR, Barcode.
@@ -108,12 +111,24 @@ public class CameraActivity extends AppCompatActivity {
         }
 
         BackgroundProcessingService.submit(() -> {
-            objectDetector.detect(bitmap, results -> {
-                runOnUiThread(() -> {
-                    objectDetector.speakResults(results);
-                    statusText.setText("Detection complete.");
-                    analysisRunning = false;
-                });
+            objectDetector.detect(bitmap, new ObjectDetector.DetectionCallback() {
+                @Override
+                public void onDetected(List<DetectionResult> results) {
+                    runOnUiThread(() -> {
+                        objectDetector.speakResults(results);
+                        statusText.setText("Detection complete.");
+                        analysisRunning = false;
+                    });
+                }
+
+                @Override
+                public void onError(String error) {
+                    runOnUiThread(() -> {
+                        tts.speak("Detection failed.");
+                        statusText.setText("Detection error.");
+                        analysisRunning = false;
+                    });
+                }
             });
         });
     }

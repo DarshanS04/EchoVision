@@ -63,7 +63,6 @@ public class VoiceButton extends AppCompatImageButton {
         pulseAnimator.setDuration(PULSE_DURATION);
         pulseAnimator.setInterpolator(new DecelerateInterpolator());
         pulseAnimator.playTogether(scaleX, scaleY, alpha);
-        pulseAnimator.setRepeatCount(-1); // But each animator below needs repeat
 
         scaleX.setRepeatCount(ObjectAnimator.INFINITE);
         scaleX.setRepeatMode(ObjectAnimator.REVERSE);
@@ -72,9 +71,7 @@ public class VoiceButton extends AppCompatImageButton {
         alpha.setRepeatCount(ObjectAnimator.INFINITE);
         alpha.setRepeatMode(ObjectAnimator.REVERSE);
 
-        scaleX.start();
-        scaleY.start();
-        alpha.start();
+        pulseAnimator.start();
     }
 
     private void stopPulse() {

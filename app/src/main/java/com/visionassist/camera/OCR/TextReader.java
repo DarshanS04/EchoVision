@@ -57,9 +57,18 @@ public class TextReader {
                 new com.visionassist.ai.gemini.GeminiPromptBuilder(context);
 
         String prompt = builder.buildDocumentSummaryPrompt(text);
-        gemini.sendTextQuery(prompt, response -> {
-            tts.speak("Summary: " + response);
-            AppLogger.i(TAG, "Gemini summary complete");
+        gemini.sendTextQuery(prompt, new com.visionassist.ai.gemini.GeminiClient.GeminiCallback() {
+            @Override
+            public void onResponse(String response) {
+                tts.speak("Summary: " + response);
+                AppLogger.i(TAG, "Gemini summary complete");
+            }
+
+            @Override
+            public void onError(String error) {
+                tts.speak("Failed to summarise document.");
+                AppLogger.e(TAG, "Gemini summary error: " + error);
+            }
         });
     }
 

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">VisionAssist</string>
+    <string name="settings_title">Settings</string>
+    <string name="camera_title">Camera Assistant</string>
+    <string name="notification_service_label">VisionAssist Notification Reader</string>
+    <string name="accessibility_service_label">VisionAssist Accessibility</string>
+    <string name="accessibility_service_description">VisionAssist reads your screen aloud and lets you control your phone with voice commands.</string>
+
+    <!-- Buttons -->
+    <string name="btn_start_listening">Start Listening</string>
+    <string name="btn_stop_listening">Stop</string>
+    <string name="btn_settings">Settings</string>
+    <string name="btn_camera">Camera</string>
+    <string name="btn_save">Save Settings</string>
+    <string name="btn_test_tts">Test Voice</string>
+
+    <!-- Status messages -->
+    <string name="status_ready">Press button or Vol Up+Down</string>
+    <string name="status_listening">Listening…</string>
+    <string name="status_processing">Processing…</string>
+
+    <!-- Settings labels -->
+    <string name="label_gemini_key">Gemini API Key</string>
+    <string name="label_emergency_name">Emergency Contact Name</string>
+    <string name="label_emergency_number">Emergency Phone Number</string>
+    <string name="label_tts_speed">Speech Speed</string>
+    <string name="label_tts_pitch">Speech Pitch</string>
+    <string name="label_offline_mode">Force Offline Mode</string>
+    <string name="label_read_notifications">Read Notifications Aloud</string>
+
+    <!-- Permissions -->
+    <string name="permission_rationale">VisionAssist needs microphone, camera, contacts, and location access to help you completely hands-free.</string>
+
+    <!-- Voice trigger hint -->
+    <string name="hint_volume_trigger">Press Volume Up + Volume Down together to activate the assistant</string>
+</resources>

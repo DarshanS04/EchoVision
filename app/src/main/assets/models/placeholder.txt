@@ -1,0 +1,10 @@
+# Placeholder for TensorFlow Lite Object Detection Model
+
+Due to file size limits, the actual .tflite model and label map are not included in this generated project.
+
+To enable offline Object Detection, please download a compatible TFLite model (e.g. SSD MobileNet V1 or V2) from TensorFlow Hub and place the files here:
+
+1. `app/src/main/assets/models/ssd_mobilenet_v1_1_metadata_1.tflite`
+2. `app/src/main/assets/models/labelmap.txt`
+
+The code in `TFLiteModelLoader.java` expects these filenames by default (configurable in `AppConstants.java`).

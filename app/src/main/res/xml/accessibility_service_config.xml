@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Accessibility service configuration for VisionAccessibilityService.
+  Declares which events to listen to and what feedback type to use.
+-->
+<accessibility-service
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:accessibilityEventTypes="typeWindowStateChanged|typeViewFocused|typeAnnouncement|typeNotificationStateChanged|typeWindowContentChanged"
+    android:accessibilityFeedbackType="feedbackSpoken"
+    android:accessibilityFlags="flagReportViewIds|flagRequestTouchExplorationMode|flagRequestFilterKeyEvents"
+    android:canRetrieveWindowContent="true"
+    android:canPerformGestures="true"
+    android:canRequestFilterKeyEvents="true"
+    android:description="@string/accessibility_service_description"
+    android:notificationTimeout="300"
+    android:settingsActivity=".ui.activities.SettingsActivity" />

@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_dark"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <!-- Gemini API Key -->
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="Gemini API Key" android:textColor="@color/text_secondary"
+            android:textSize="13sp" android:layout_marginTop="16dp" />
+        <EditText android:id="@+id/api_key_input"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:hint="Enter your API key" android:inputType="textPassword"
+            android:textColor="@color/text_primary" android:backgroundTint="@color/accent_blue"
+            android:contentDescription="Gemini API key input" />
+
+        <!-- Emergency Contact Name -->
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="Emergency Contact Name" android:textColor="@color/text_secondary"
+            android:textSize="13sp" android:layout_marginTop="20dp" />
+        <EditText android:id="@+id/emergency_name_input"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:hint="e.g. Mom" android:inputType="textPersonName"
+            android:textColor="@color/text_primary" android:backgroundTint="@color/accent_blue"
+            android:contentDescription="Emergency contact name input" />
+
+        <!-- Emergency Contact Number -->
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="Emergency Phone Number" android:textColor="@color/text_secondary"
+            android:textSize="13sp" android:layout_marginTop="20dp" />
+        <EditText android:id="@+id/emergency_number_input"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:hint="+1 234 567 8900" android:inputType="phone"
+            android:textColor="@color/text_primary" android:backgroundTint="@color/accent_blue"
+            android:contentDescription="Emergency phone number input" />
+
+        <!-- TTS Speed -->
+        <TextView android:id="@+id/tts_speed_label"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="Speed: 1.0x" android:textColor="@color/text_secondary"
+            android:textSize="13sp" android:layout_marginTop="24dp" />
+        <SeekBar android:id="@+id/tts_speed_bar"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:max="100" android:progress="33"
+            android:contentDescription="Speech speed slider" />
+
+        <!-- TTS Pitch -->
+        <TextView android:id="@+id/tts_pitch_label"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="Pitch: 1.0x" android:textColor="@color/text_secondary"
+            android:textSize="13sp" android:layout_marginTop="16dp" />
+        <SeekBar android:id="@+id/tts_pitch_bar"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:max="100" android:progress="33"
+            android:contentDescription="Speech pitch slider" />
+
+        <!-- Offline Mode -->
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:gravity="center_vertical"
+            android:layout_marginTop="24dp">
+            <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:text="Force Offline Mode"
+                android:textColor="@color/text_primary" android:textSize="15sp" />
+            <Switch android:id="@+id/offline_mode_switch"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:contentDescription="Toggle offline mode" />
+        </LinearLayout>
+
+        <!-- Read Notifications -->
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:gravity="center_vertical"
+            android:layout_marginTop="16dp">
+            <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:text="Read Notifications Aloud"
+                android:textColor="@color/text_primary" android:textSize="15sp" />
+            <Switch android:id="@+id/notification_switch"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:contentDescription="Toggle notification reading"
+                android:checked="true" />
+        </LinearLayout>
+
+        <!-- Test TTS -->
+        <Button android:id="@+id/test_tts_button"
+            android:layout_width="match_parent" android:layout_height="56dp"
+            android:text="Test Voice" android:layout_marginTop="24dp"
+            android:backgroundTint="@color/bg_surface"
+            android:textColor="@color/text_primary"
+            android:contentDescription="Test text to speech" />
+
+        <!-- Save Button -->
+        <Button android:id="@+id/save_button"
+            android:layout_width="match_parent" android:layout_height="56dp"
+            android:text="Save Settings" android:layout_marginTop="8dp"
+            android:backgroundTint="@color/accent_blue"
+            android:textColor="@color/white"
+            android:layout_marginBottom="32dp"
+            android:contentDescription="Save settings" />
+
+    </LinearLayout>
+</ScrollView>

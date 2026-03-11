@@ -20,7 +20,9 @@ public class VoiceCommandListener implements SpeechRecognizerManager.SpeechCallb
     /** Optional callback for UI updates */
     public interface UIUpdateCallback {
         void onListeningStateChanged(boolean isListening);
+
         void onPartialTextReceived(String partialText);
+
         void onCommandProcessed(String commandText, String response);
     }
 
@@ -39,32 +41,36 @@ public class VoiceCommandListener implements SpeechRecognizerManager.SpeechCallb
     @Override
     public void onPartialResult(String partialText) {
         AppLogger.v(TAG, "Partial: " + partialText);
-        if (uiCallback != null) uiCallback.onPartialTextReceived(partialText);
+        if (uiCallback != null)
+            uiCallback.onPartialTextReceived(partialText);
     }
 
     @Override
     public void onFinalResult(String finalText) {
-        if (finalText == null || finalText.trim().isEmpty()) return;
+        if (finalText == null || finalText.trim().isEmpty())
+            return;
         String cleaned = finalText.trim().toLowerCase();
         AppLogger.i(TAG, "Processing command: " + cleaned);
 
         // Route command — async, will call TTS internally
         commandRouter.route(cleaned, response -> {
-            if (uiCallback != null) uiCallback.onCommandProcessed(finalText, response);
+            if (uiCallback != null)
+                uiCallback.onCommandProcessed(finalText, response);
         });
     }
 
     @Override
     public void onListeningStarted() {
         AppLogger.d(TAG, "Listening started");
-        ttsManager.speak("Listening");
-        if (uiCallback != null) uiCallback.onListeningStateChanged(true);
+        if (uiCallback != null)
+            uiCallback.onListeningStateChanged(true);
     }
 
     @Override
     public void onListeningStopped() {
         AppLogger.d(TAG, "Listening stopped");
-        if (uiCallback != null) uiCallback.onListeningStateChanged(false);
+        if (uiCallback != null)
+            uiCallback.onListeningStateChanged(false);
     }
 
     @Override
@@ -74,6 +80,7 @@ public class VoiceCommandListener implements SpeechRecognizerManager.SpeechCallb
         if (errorCode != 7 && errorCode != 5) { // Not NO_MATCH or CLIENT
             ttsManager.speak("Sorry, I couldn't understand. Please try again.");
         }
-        if (uiCallback != null) uiCallback.onListeningStateChanged(false);
+        if (uiCallback != null)
+            uiCallback.onListeningStateChanged(false);
     }
 }

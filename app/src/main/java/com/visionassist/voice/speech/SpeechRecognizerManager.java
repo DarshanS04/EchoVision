@@ -22,9 +22,13 @@ public class SpeechRecognizerManager {
 
     public interface SpeechCallback {
         void onPartialResult(String partialText);
+
         void onFinalResult(String finalText);
+
         void onListeningStarted();
+
         void onListeningStopped();
+
         void onError(int errorCode, String errorMessage);
     }
 
@@ -51,7 +55,8 @@ public class SpeechRecognizerManager {
     }
 
     /**
-     * Initialise recognizer. Must be called from a thread with a Looper (e.g. main thread).
+     * Initialise recognizer. Must be called from a thread with a Looper (e.g. main
+     * thread).
      */
     public void init() {
         if (!SpeechRecognizer.isRecognitionAvailable(context)) {
@@ -74,12 +79,15 @@ public class SpeechRecognizerManager {
     public void startListening() {
         if (!PermissionUtils.hasMicrophonePermission(context)) {
             AppLogger.w(TAG, "Microphone permission not granted");
-            if (callback != null) callback.onError(-1, "Microphone permission required");
+            if (callback != null)
+                callback.onError(-1, "Microphone permission required");
             return;
         }
 
-        if (speechRecognizer == null) init();
-        if (speechRecognizer == null) return;
+        if (speechRecognizer == null)
+            init();
+        if (speechRecognizer == null)
+            return;
 
         Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
@@ -87,9 +95,6 @@ public class SpeechRecognizerManager {
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.ENGLISH);
         intent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true);
         intent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1);
-        intent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS, 500);
-        intent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 1500);
-        intent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 2000);
 
         speechRecognizer.startListening(intent);
         isListening = true;
@@ -135,7 +140,8 @@ public class SpeechRecognizerManager {
             @Override
             public void onReadyForSpeech(Bundle params) {
                 AppLogger.d(TAG, "Ready for speech");
-                if (callback != null) callback.onListeningStarted();
+                if (callback != null)
+                    callback.onListeningStarted();
             }
 
             @Override
@@ -144,16 +150,19 @@ public class SpeechRecognizerManager {
             }
 
             @Override
-            public void onRmsChanged(float rmsdB) { /* Audio level change, unused */ }
+            public void onRmsChanged(float rmsdB) {
+                /* Audio level change, unused */ }
 
             @Override
-            public void onBufferReceived(byte[] buffer) { /* Unused */ }
+            public void onBufferReceived(byte[] buffer) {
+                /* Unused */ }
 
             @Override
             public void onEndOfSpeech() {
                 AppLogger.d(TAG, "Speech ended");
                 isListening = false;
-                if (callback != null) callback.onListeningStopped();
+                if (callback != null)
+                    callback.onListeningStopped();
             }
 
             @Override
@@ -161,7 +170,8 @@ public class SpeechRecognizerManager {
                 isListening = false;
                 String message = speechErrorToString(error);
                 AppLogger.e(TAG, "Speech error: " + message);
-                if (callback != null) callback.onError(error, message);
+                if (callback != null)
+                    callback.onError(error, message);
 
                 // Auto-restart in continuous mode on non-fatal errors
                 if (continuousMode && error != SpeechRecognizer.ERROR_RECOGNIZER_BUSY) {
@@ -174,12 +184,12 @@ public class SpeechRecognizerManager {
             @Override
             public void onResults(Bundle results) {
                 isListening = false;
-                ArrayList<String> matches =
-                        results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+                ArrayList<String> matches = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
                 if (matches != null && !matches.isEmpty()) {
                     String text = matches.get(0);
                     AppLogger.i(TAG, "Final result: " + text);
-                    if (callback != null) callback.onFinalResult(text);
+                    if (callback != null)
+                        callback.onFinalResult(text);
                 }
 
                 // Auto-restart in continuous mode
@@ -190,32 +200,43 @@ public class SpeechRecognizerManager {
 
             @Override
             public void onPartialResults(Bundle partialResults) {
-                ArrayList<String> matches =
-                        partialResults.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+                ArrayList<String> matches = partialResults.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
                 if (matches != null && !matches.isEmpty()) {
                     String text = matches.get(0);
                     AppLogger.v(TAG, "Partial: " + text);
-                    if (callback != null) callback.onPartialResult(text);
+                    if (callback != null)
+                        callback.onPartialResult(text);
                 }
             }
 
             @Override
-            public void onEvent(int eventType, Bundle params) { /* Unused */ }
+            public void onEvent(int eventType, Bundle params) {
+                /* Unused */ }
         };
     }
 
     private String speechErrorToString(int error) {
         switch (error) {
-            case SpeechRecognizer.ERROR_AUDIO: return "Audio recording error";
-            case SpeechRecognizer.ERROR_CLIENT: return "Other client side errors";
-            case SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS: return "Insufficient permissions";
-            case SpeechRecognizer.ERROR_NETWORK: return "Other network related errors";
-            case SpeechRecognizer.ERROR_NETWORK_TIMEOUT: return "Network operation timed out";
-            case SpeechRecognizer.ERROR_NO_MATCH: return "No speech input";
-            case SpeechRecognizer.ERROR_RECOGNIZER_BUSY: return "RecognitionService is busy";
-            case SpeechRecognizer.ERROR_SERVER: return "Server sends error status";
-            case SpeechRecognizer.ERROR_SPEECH_TIMEOUT: return "No speech input";
-            default: return "Unknown error " + error;
+            case SpeechRecognizer.ERROR_AUDIO:
+                return "Audio recording error";
+            case SpeechRecognizer.ERROR_CLIENT:
+                return "Other client side errors";
+            case SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS:
+                return "Insufficient permissions";
+            case SpeechRecognizer.ERROR_NETWORK:
+                return "Other network related errors";
+            case SpeechRecognizer.ERROR_NETWORK_TIMEOUT:
+                return "Network operation timed out";
+            case SpeechRecognizer.ERROR_NO_MATCH:
+                return "No speech input";
+            case SpeechRecognizer.ERROR_RECOGNIZER_BUSY:
+                return "RecognitionService is busy";
+            case SpeechRecognizer.ERROR_SERVER:
+                return "Server sends error status";
+            case SpeechRecognizer.ERROR_SPEECH_TIMEOUT:
+                return "No speech input";
+            default:
+                return "Unknown error " + error;
         }
     }
 }

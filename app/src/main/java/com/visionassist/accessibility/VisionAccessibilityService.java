@@ -44,6 +44,20 @@ public class VisionAccessibilityService extends AccessibilityService {
         tts = TTSManager.getInstance(this);
         screenReader = new ScreenReader(this);
         volumeButtonTrigger = new VolumeButtonTrigger(this);
+        volumeButtonTrigger.setCallback(() -> {
+            AppLogger.i(TAG, "Volume trigger in AccessibilityService");
+            Intent intent = new Intent(this, com.visionassist.services.AssistantService.class);
+            intent.setAction(AppConstants.ACTION_START_LISTENING);
+            try {
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                    startForegroundService(intent);
+                } else {
+                    startService(intent);
+                }
+            } catch (Exception e) {
+                AppLogger.e(TAG, "Failed to start AssistantService from accessibility: " + e.getMessage());
+            }
+        });
 
         // Configure service capabilities
         AccessibilityServiceInfo info = new AccessibilityServiceInfo();
@@ -58,12 +72,14 @@ public class VisionAccessibilityService extends AccessibilityService {
                 | AccessibilityServiceInfo.FLAG_REQUEST_TOUCH_EXPLORATION_MODE;
         setServiceInfo(info);
 
-        tts.speak("VisionAssist accessibility service is active. Press volume up and down together to activate the assistant.");
+        tts.speak(
+                "VisionAssist accessibility service is active. Press volume up and down together to activate the assistant.");
     }
 
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
-        if (event == null) return;
+        if (event == null)
+            return;
 
         int eventType = event.getEventType();
 
@@ -95,7 +111,8 @@ public class VisionAccessibilityService extends AccessibilityService {
      */
     public String getCurrentScreenDescription() {
         AccessibilityNodeInfo root = getRootInActiveWindow();
-        if (root == null) return "I couldn't read the screen right now.";
+        if (root == null)
+            return "I couldn't read the screen right now.";
         String desc = screenReader.describeRootNode(root);
         root.recycle();
         return desc.isEmpty() ? "The screen appears to be empty." : desc;

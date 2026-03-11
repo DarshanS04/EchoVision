@@ -56,7 +56,11 @@ public class AssistantService extends Service {
             stopListening();
         }
 
-        startForeground(AppConstants.NOTIFICATION_ID_ASSISTANT, buildNotification());
+        try {
+            startForeground(AppConstants.NOTIFICATION_ID_ASSISTANT, buildNotification());
+        } catch (Exception e) {
+            AppLogger.e(TAG, "Failed to start foreground: " + e.getMessage());
+        }
         isRunning = true;
         return START_STICKY; // Restart if killed
     }
@@ -138,7 +142,8 @@ public class AssistantService extends Service {
     public void onDestroy() {
         super.onDestroy();
         isRunning = false;
-        if (speechRecognizerManager != null) speechRecognizerManager.destroy();
+        if (speechRecognizerManager != null)
+            speechRecognizerManager.destroy();
         AppLogger.i(TAG, "AssistantService destroyed");
     }
 }

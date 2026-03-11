@@ -49,7 +49,6 @@ public class MainActivity extends AppCompatActivity
         initViews();
         setupPermissions();
         setupVolumeButtonTrigger();
-        startAssistantService();
 
         // Load assistant fragment
         if (savedInstanceState == null) {
@@ -101,6 +100,7 @@ public class MainActivity extends AppCompatActivity
             public void onAllPermissionsGranted() {
                 AppLogger.i(TAG, "All permissions granted");
                 tts.speak("All permissions granted. VisionAssist is ready.");
+                startAssistantService();
             }
 
             @Override
@@ -114,6 +114,7 @@ public class MainActivity extends AppCompatActivity
             permissionManager.requestAllPermissions();
         } else {
             AppLogger.i(TAG, "All permissions already granted");
+            startAssistantService();
         }
     }
 

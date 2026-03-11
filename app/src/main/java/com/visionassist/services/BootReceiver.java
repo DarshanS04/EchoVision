@@ -18,10 +18,14 @@ public class BootReceiver extends BroadcastReceiver {
         if (Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction())) {
             AppLogger.i(TAG, "Boot completed — starting AssistantService");
             Intent serviceIntent = new Intent(context, AssistantService.class);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                context.startForegroundService(serviceIntent);
-            } else {
-                context.startService(serviceIntent);
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    context.startForegroundService(serviceIntent);
+                } else {
+                    context.startService(serviceIntent);
+                }
+            } catch (Exception e) {
+                AppLogger.e(TAG, "Failed to start AssistantService on boot: " + e.getMessage());
             }
         }
     }

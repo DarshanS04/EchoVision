@@ -74,6 +74,20 @@ public final class AppConstants {
     public static final String CMD_HELP = "help";
     public static final String CMD_STOP = "stop";
 
+    // System Control Keywords
+    public static final String CMD_WIFI = "wifi";
+    public static final String CMD_BLUETOOTH = "bluetooth";
+    public static final String CMD_DATA = "data";
+    public static final String CMD_FLASHLIGHT = "flashlight";
+    public static final String CMD_TORCH = "torch";
+    public static final String CMD_AIRPLANE = "airplane";
+    public static final String CMD_VOLUME = "volume";
+    public static final String CMD_BRIGHTNESS = "brightness";
+    public static final String CMD_DND = "disturb";
+    public static final String CMD_ROTATION = "rotation";
+    public static final String CMD_BATTERY_SAVER = "battery saver";
+    public static final String CMD_LOCATION = "location";
+
     // SQL / Storage
     public static final String DB_NAME = "visionassist.db";
     public static final int DB_VERSION = 1;

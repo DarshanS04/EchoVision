@@ -24,6 +24,17 @@ public class VoiceCommand {
         HELP,
         STOP,
         SELECT_CONTACT,
+        TOGGLE_WIFI,
+        TOGGLE_BLUETOOTH,
+        TOGGLE_DATA,
+        TOGGLE_FLASHLIGHT,
+        TOGGLE_AIRPLANE_MODE,
+        SET_VOLUME,
+        SET_BRIGHTNESS,
+        TOGGLE_DND,
+        TOGGLE_ROTATION,
+        TOGGLE_BATTERY_SAVER,
+        TOGGLE_LOCATION,
         UNKNOWN
     }
 

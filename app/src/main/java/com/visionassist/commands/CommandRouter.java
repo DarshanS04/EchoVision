@@ -108,6 +108,50 @@ public class CommandRouter {
                 tts.stop();
                 callback.onResult("Stopped.");
                 break;
+            
+            case TOGGLE_WIFI:
+                systemCommands.toggleWifi(callback);
+                break;
+                
+            case TOGGLE_BLUETOOTH:
+                systemCommands.toggleBluetooth(callback);
+                break;
+                
+            case TOGGLE_DATA:
+                systemCommands.toggleMobileData(callback);
+                break;
+                
+            case TOGGLE_FLASHLIGHT:
+                systemCommands.toggleFlashlight(rawText, callback);
+                break;
+                
+            case TOGGLE_AIRPLANE_MODE:
+                systemCommands.toggleAirplaneMode(callback);
+                break;
+                
+            case SET_VOLUME:
+                systemCommands.setVolume(rawText, callback);
+                break;
+                
+            case SET_BRIGHTNESS:
+                systemCommands.setBrightness(rawText, callback);
+                break;
+                
+            case TOGGLE_DND:
+                systemCommands.toggleDND(callback);
+                break;
+
+            case TOGGLE_ROTATION:
+                systemCommands.toggleRotation(callback);
+                break;
+
+            case TOGGLE_BATTERY_SAVER:
+                systemCommands.toggleBatterySaver(callback);
+                break;
+
+            case TOGGLE_LOCATION:
+                systemCommands.toggleLocation(callback);
+                break;
 
             case GEMINI_QUERY:
             default:
@@ -165,6 +209,41 @@ public class CommandRouter {
         }
         if (t.equals(AppConstants.CMD_STOP) || t.equals("cancel") || t.equals("quiet")) {
             return new VoiceCommand(text, VoiceCommand.CommandType.STOP);
+        }
+
+        // System Controls
+        if (t.contains(AppConstants.CMD_WIFI)) {
+            return new VoiceCommand(text, VoiceCommand.CommandType.TOGGLE_WIFI);
+        }
+        if (t.contains(AppConstants.CMD_BLUETOOTH)) {
+            return new VoiceCommand(text, VoiceCommand.CommandType.TOGGLE_BLUETOOTH);
+        }
+        if (t.contains(AppConstants.CMD_DATA) || (t.contains("mobile") && t.contains("internet"))) {
+            return new VoiceCommand(text, VoiceCommand.CommandType.TOGGLE_DATA);
+        }
+        if (t.contains(AppConstants.CMD_FLASHLIGHT) || t.contains(AppConstants.CMD_TORCH)) {
+            return new VoiceCommand(text, VoiceCommand.CommandType.TOGGLE_FLASHLIGHT);
+        }
+        if (t.contains(AppConstants.CMD_AIRPLANE)) {
+            return new VoiceCommand(text, VoiceCommand.CommandType.TOGGLE_AIRPLANE_MODE);
+        }
+        if (t.contains(AppConstants.CMD_VOLUME) || t.contains("sound") || t.contains("louder") || t.contains("quieter")) {
+            return new VoiceCommand(text, VoiceCommand.CommandType.SET_VOLUME);
+        }
+        if (t.contains(AppConstants.CMD_BRIGHTNESS) || t.contains("light") || t.contains("darker")) {
+            return new VoiceCommand(text, VoiceCommand.CommandType.SET_BRIGHTNESS);
+        }
+        if (t.contains(AppConstants.CMD_DND) || t.contains("not disturb") || t.contains("silent mode")) {
+            return new VoiceCommand(text, VoiceCommand.CommandType.TOGGLE_DND);
+        }
+        if (t.contains(AppConstants.CMD_ROTATION) || t.contains("rotate")) {
+            return new VoiceCommand(text, VoiceCommand.CommandType.TOGGLE_ROTATION);
+        }
+        if (t.contains(AppConstants.CMD_BATTERY_SAVER) || t.contains("power saver")) {
+            return new VoiceCommand(text, VoiceCommand.CommandType.TOGGLE_BATTERY_SAVER);
+        }
+        if (t.contains(AppConstants.CMD_LOCATION) || t.contains("gps")) {
+            return new VoiceCommand(text, VoiceCommand.CommandType.TOGGLE_LOCATION);
         }
 
         // Check for contact selection if pending

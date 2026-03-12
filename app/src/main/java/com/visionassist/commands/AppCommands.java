@@ -43,7 +43,13 @@ public class AppCommands {
         List<ResolveInfo> apps = pm.queryIntentActivities(mainIntent, 0);
         for (ResolveInfo info : apps) {
             String label = info.loadLabel(pm).toString().toLowerCase();
-            if (label.contains(appName)) {
+            // if (label.contains(appName)) {
+            AppLogger.d(TAG, "Installed app: " + label);
+
+            String normalizedLabel = label.replaceAll("[^a-z0-9 ]", "");
+            String normalizedQuery = appName.replaceAll("[^a-z0-9 ]", "");
+
+            if (normalizedLabel.contains(normalizedQuery)){
                 String packageName = info.activityInfo.packageName;
                 Intent launchIntent = pm.getLaunchIntentForPackage(packageName);
                 if (launchIntent != null) {
@@ -87,14 +93,34 @@ public class AppCommands {
         callback.onResult(sb.toString());
     }
 
+    // private String extractAppName(String commandText) {
+    //     // Remove trigger words and extract the app name
+    //     String cleaned = commandText.toLowerCase()
+    //             .replace("open", "")
+    //             .replace("launch", "")
+    //             .replace("start", "")
+    //             .replace("run", "")
+    //             .trim();
+    //     return cleaned;
+    // }
+
     private String extractAppName(String commandText) {
-        // Remove trigger words and extract the app name
-        String cleaned = commandText.toLowerCase()
-                .replace("open", "")
-                .replace("launch", "")
-                .replace("start", "")
-                .replace("run", "")
+        commandText = commandText.toLowerCase().trim();
+
+        String[] triggers = {"open", "launch", "start", "run"};
+
+        for (String trigger : triggers) {
+            if (commandText.startsWith(trigger)) {
+                commandText = commandText.substring(trigger.length()).trim();
+                break;
+            }
+        }
+
+        commandText = commandText.replace("the", "")
+                .replace("app", "")
                 .trim();
-        return cleaned;
+
+        return commandText;
     }
+
 }

@@ -27,8 +27,9 @@ public final class NetworkUtils {
         NetworkCapabilities capabilities = cm.getNetworkCapabilities(activeNetwork);
         if (capabilities == null) return false;
 
-        return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-                && capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED);
+        // NET_CAPABILITY_VALIDATED can sometimes be false even with connectivity
+        // We prioritize INTERNET capability.
+        return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET);
     }
 
     /**

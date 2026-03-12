@@ -8,8 +8,8 @@ public final class AppConstants {
     private AppConstants() {}
 
     // Gemini
-    public static final String GEMINI_MODEL_NAME = "gemini-1.5-flash";
-    public static final String GEMINI_VISION_MODEL = "gemini-1.5-flash";
+    public static final String GEMINI_MODEL_NAME = "gemini-2.5-flash";
+    public static final String GEMINI_VISION_MODEL = "gemini-2.5-flash";
 
     // TFLite Model
     public static final String TFLITE_MODEL_PATH = "models/object_detection.tflite";

@@ -25,8 +25,8 @@ public class GeminiClient {
 
     private static final String TAG = "GeminiClient";
     private static final String GEMINI_API_BASE =
-            "https://generativelanguage.googleapis.com/v1beta/models/";
-    private static final String MODEL = "gemini-1.5-flash";
+            "https://generativelanguage.googleapis.com/v1/models/";
+    private static final String MODEL = "gemini-2.5-flash";
     private static final MediaType JSON_TYPE = MediaType.parse("application/json; charset=utf-8");
 
     public interface GeminiCallback {
@@ -107,10 +107,11 @@ public class GeminiClient {
             public void onResponse(@androidx.annotation.NonNull Call call,
                                    @androidx.annotation.NonNull Response response) {
                 try {
-                    String body = response.body().string();
+                    String body = response.body() != null ? response.body().string() : "";
                     if (!response.isSuccessful()) {
                         AppLogger.e(TAG, "Gemini error response: " + body);
-                        callback.onError("API error: " + response.code());
+                        String errorMsg = parseErrorResponse(body);
+                        callback.onError("API error (" + response.code() + "): " + errorMsg);
                         return;
                     }
                     String text = parseResponse(body);
@@ -118,10 +119,23 @@ public class GeminiClient {
                     callback.onResponse(text);
                 } catch (Exception e) {
                     AppLogger.e(TAG, "Response parse error", e);
-                    callback.onError("Failed to parse response");
+                    callback.onError("Failed to parse response: " + e.getMessage());
                 }
             }
         });
+    }
+
+    private String parseErrorResponse(String responseJson) {
+        try {
+            JSONObject root = new JSONObject(responseJson);
+            if (root.has("error")) {
+                JSONObject error = root.getJSONObject("error");
+                return error.optString("message", "Unknown API error");
+            }
+        } catch (Exception e) {
+            AppLogger.e(TAG, "Error parsing error response", e);
+        }
+        return "Unknown error";
     }
 
     private String parseResponse(String responseJson) throws JSONException {

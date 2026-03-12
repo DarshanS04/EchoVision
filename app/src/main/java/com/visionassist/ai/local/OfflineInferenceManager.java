@@ -60,10 +60,9 @@ public class OfflineInferenceManager {
                 @Override
                 public void onError(String error) {
                     AppLogger.e(TAG, "Gemini error: " + error);
-                    String fallback = "I'm sorry, I couldn't get an answer. "
-                            + "Please check your internet connection or API key.";
-                    tts.speak(fallback);
-                    callback.onResult(fallback);
+                    String speakableError = "I encountered an error: " + error;
+                    tts.speak(speakableError);
+                    callback.onResult(speakableError);
                 }
             });
         } else {

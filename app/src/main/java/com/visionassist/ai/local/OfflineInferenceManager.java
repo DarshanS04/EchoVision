@@ -60,7 +60,12 @@ public class OfflineInferenceManager {
                 @Override
                 public void onError(String error) {
                     AppLogger.e(TAG, "Gemini error: " + error);
-                    String speakableError = "I encountered an error: " + error;
+                    String speakableError;
+                    if (error != null && error.contains("Offline mode")) {
+                        speakableError = "I'm currently in Force Offline Mode as configured in your settings.";
+                    } else {
+                        speakableError = "I encountered an error connecting online: " + error;
+                    }
                     tts.speak(speakableError);
                     callback.onResult(speakableError);
                 }

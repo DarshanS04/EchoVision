@@ -43,6 +43,9 @@ public class TextReader {
             tts.speak("This is a long document. Let me summarise it for you.");
             // Trigger summarisation — will be handled by GeminiClient
             summariseWithGemini(cleaned);
+        } else if (cleaned.length() > LONG_TEXT_THRESHOLD) {
+            // Long text, but offline
+            tts.speak("I found a long document. I'll read the first part for you since I'm offline. " + cleaned);
         } else {
             // Read directly
             tts.speak("I found the following text: " + cleaned);

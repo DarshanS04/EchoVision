@@ -51,6 +51,10 @@ public class GeminiClient {
      * Send a text-only query to Gemini.
      */
     public void sendTextQuery(String prompt, GeminiCallback callback) {
+        if (!repository.shouldUseGemini()) {
+            callback.onError("Offline mode is enabled.");
+            return;
+        }
         String apiKey = repository.getGeminiApiKey();
         if (apiKey == null || apiKey.isEmpty()) {
             callback.onError("Gemini API key not configured.");
@@ -72,6 +76,10 @@ public class GeminiClient {
      */
     public void sendVisionQuery(String prompt, byte[] imageBytes, String mimeType,
                                 GeminiCallback callback) {
+        if (!repository.shouldUseGemini()) {
+            callback.onError("Offline mode is enabled.");
+            return;
+        }
         String apiKey = repository.getGeminiApiKey();
         if (apiKey == null || apiKey.isEmpty()) {
             callback.onError("Gemini API key not configured.");

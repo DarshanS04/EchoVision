@@ -61,6 +61,10 @@ public class CommandRouter {
                 phoneCommands.callContact(rawText, callback);
                 break;
 
+            case SELECT_CONTACT:
+                phoneCommands.selectContact(rawText, callback);
+                break;
+
             case BATTERY_STATUS:
                 systemCommands.readBatteryStatus(callback);
                 break;
@@ -161,6 +165,17 @@ public class CommandRouter {
         }
         if (t.equals(AppConstants.CMD_STOP) || t.equals("cancel") || t.equals("quiet")) {
             return new VoiceCommand(text, VoiceCommand.CommandType.STOP);
+        }
+
+        // Check for contact selection if pending
+        if (phoneCommands.hasPendingContacts()) {
+            if (t.contains("option") || t.contains("number") || t.contains("choice") ||
+                t.matches(".*\\bone\\b.*") || t.matches(".*\\btwo\\b.*") ||
+                t.matches(".*\\bthree\\b.*") || t.matches(".*\\bfour\\b.*") ||
+                t.matches(".*\\bfive\\b.*") || t.contains("1") || t.contains("2") ||
+                t.contains("3") || t.contains("4") || t.contains("5")) {
+                return new VoiceCommand(text, VoiceCommand.CommandType.SELECT_CONTACT);
+            }
         }
 
         return new VoiceCommand(text, VoiceCommand.CommandType.GEMINI_QUERY);

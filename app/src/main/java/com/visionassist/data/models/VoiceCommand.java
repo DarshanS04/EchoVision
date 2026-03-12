@@ -23,6 +23,7 @@ public class VoiceCommand {
         GEMINI_QUERY,
         HELP,
         STOP,
+        SELECT_CONTACT,
         UNKNOWN
     }
 

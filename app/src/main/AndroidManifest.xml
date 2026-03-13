@@ -9,6 +9,38 @@
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />
         </intent>
+        <!-- YouTube search intent -->
+        <intent>
+            <action android:name="android.intent.action.SEARCH" />
+            <data android:mimeType="video/*" />
+        </intent>
+        <!-- Browser / web intents -->
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="https" />
+        </intent>
+        <!-- SMS intent -->
+        <intent>
+            <action android:name="android.intent.action.SENDTO" />
+            <data android:scheme="smsto" />
+        </intent>
+        <!-- Maps/navigation intent -->
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="geo" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="google.navigation" />
+        </intent>
+        <!-- WhatsApp -->
+        <package android:name="com.whatsapp" />
+        <!-- YouTube -->
+        <package android:name="com.google.android.youtube" />
+        <!-- Spotify -->
+        <package android:name="com.spotify.music" />
+        <!-- Google Maps -->
+        <package android:name="com.google.android.apps.maps" />
     </queries>
 
     <!-- ==================== PERMISSIONS ==================== -->
@@ -23,6 +55,10 @@
     <uses-permission android:name="android.permission.SEND_SMS" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <uses-permission android:name="android.permission.READ_CALL_LOG" />
+
+    <!-- Calendar -->
+    <uses-permission android:name="android.permission.READ_CALENDAR" />
+    <uses-permission android:name="android.permission.WRITE_CALENDAR" />
 
     <!-- Location (for Navigation & SOS) -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />

@@ -35,6 +35,17 @@ public class VoiceCommand {
         TOGGLE_ROTATION,
         TOGGLE_BATTERY_SAVER,
         TOGGLE_LOCATION,
+        YOUTUBE_PLAY,
+        SPOTIFY_PLAY,
+        SEND_SMS,
+        SEND_WHATSAPP,
+        SET_ALARM,
+        SET_TIMER,
+        CREATE_CALENDAR_EVENT,
+        WEB_SEARCH,
+        WEATHER_CHECK,
+        NEWS_CHECK,
+        NEARBY_SEARCH,
         UNKNOWN
     }
 

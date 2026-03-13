@@ -42,6 +42,7 @@ public final class AppConstants {
     public static final long VOLUME_TRIGGER_WINDOW_MS = 1000L; // Both buttons within 1 second
     public static final int VOLUME_TRIGGER_BEEP_FREQUENCY = 880;
     public static final int VOLUME_TRIGGER_BEEP_DURATION = 200;
+    public static final long VOLUME_LONG_PRESS_DURATION_MS = 1500L; // Long press to activate
 
     // Intent actions
     public static final String ACTION_START_LISTENING = "com.visionassist.ACTION_START_LISTENING";
@@ -85,6 +86,36 @@ public final class AppConstants {
     public static final String CMD_BRIGHTNESS = "brightness";
     public static final String CMD_DND = "disturb";
     public static final String CMD_ROTATION = "rotation";
+
+    // Media Keywords
+    public static final String CMD_YOUTUBE = "youtube";
+    public static final String CMD_SPOTIFY = "spotify";
+    public static final String CMD_PLAY = "play";
+
+    // Communication Keywords
+    public static final String CMD_SMS = "sms";
+    public static final String CMD_SEND = "send";
+    public static final String CMD_TEXT = "text message";
+    public static final String CMD_WHATSAPP = "whatsapp";
+
+    // Scheduler Keywords
+    public static final String CMD_ALARM = "alarm";
+    public static final String CMD_TIMER = "timer";
+    public static final String CMD_CALENDAR = "calendar";
+    public static final String CMD_REMINDER = "reminder";
+    public static final String CMD_EVENT = "event";
+    public static final String CMD_SCHEDULE = "schedule";
+
+    // Web Keywords
+    public static final String CMD_SEARCH = "search";
+    public static final String CMD_GOOGLE = "google";
+    public static final String CMD_WEATHER = "weather";
+    public static final String CMD_NEWS = "news";
+
+    // Navigation/Nearby Keywords
+    public static final String CMD_NEARBY = "nearby";
+    public static final String CMD_FIND_NEAR = "find near";
+    public static final String CMD_CLOSE_TO = "close to me";
     public static final String CMD_BATTERY_SAVER = "battery saver";
     public static final String CMD_LOCATION = "location";
 

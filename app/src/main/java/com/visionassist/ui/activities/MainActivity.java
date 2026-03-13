@@ -120,11 +120,24 @@ public class MainActivity extends AppCompatActivity
 
     private void setupVolumeButtonTrigger() {
         volumeButtonTrigger = new VolumeButtonTrigger(this);
-        volumeButtonTrigger.setCallback(() -> {
-            AppLogger.i(TAG, "Volume trigger in MainActivity");
-            Intent intent = new Intent(this, AssistantService.class);
-            intent.setAction(AppConstants.ACTION_START_LISTENING);
-            startService(intent);
+        volumeButtonTrigger.setCallback(new VolumeButtonTrigger.TriggerCallback() {
+            @Override
+            public void onTriggerActivated() {
+                AppLogger.i(TAG, "Volume dual-press trigger in MainActivity");
+                activateAssistant();
+            }
+
+            @Override
+            public void onLongPressActivated() {
+                AppLogger.i(TAG, "Volume long-press trigger in MainActivity");
+                activateAssistant();
+            }
+
+            private void activateAssistant() {
+                Intent intent = new Intent(MainActivity.this, AssistantService.class);
+                intent.setAction(AppConstants.ACTION_START_LISTENING);
+                startService(intent);
+            }
         });
     }
 
@@ -154,7 +167,7 @@ public class MainActivity extends AppCompatActivity
         runOnUiThread(() -> {
             if (voiceButton != null) voiceButton.setListening(listening);
             if (statusText != null) {
-                statusText.setText(listening ? "Listening…" : "Press button or Vol Up+Down");
+                statusText.setText(listening ? "Listening…" : "Long-press Vol Up to activate");
             }
         });
     }
@@ -185,6 +198,6 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onResume() {
         super.onResume();
-        tts.speak("VisionAssist is ready. Press the voice button or volume up and down to activate.");
+        tts.speak("EchoVision is ready. Long press volume up, or press the voice button to activate.");
     }
 }

@@ -3,19 +3,35 @@ package com.visionassist.commands;
 import android.content.Context;
 import android.content.Intent;
 import com.visionassist.ai.local.OfflineInferenceManager;
+import com.visionassist.commands.communication.CommunicationCommands;
+import com.visionassist.commands.media.MediaCommands;
+import com.visionassist.commands.navigation.ExternalNavigationCommands;
+import com.visionassist.commands.scheduler.SchedulerCommands;
+import com.visionassist.commands.web.WebCommands;
 import com.visionassist.core.constants.AppConstants;
 import com.visionassist.core.logger.AppLogger;
 import com.visionassist.data.models.VoiceCommand;
 import com.visionassist.data.repository.AppRepository;
 import com.visionassist.emergency.EmergencyManager;
 import com.visionassist.navigation.NavigationAssistant;
+import com.visionassist.services.NotificationReaderService;
 import com.visionassist.ui.activities.CameraActivity;
 import com.visionassist.voice.tts.TTSManager;
 
 /**
  * Central command router. Receives raw voice text, classifies it into a VoiceCommand
- * and dispatches to the appropriate handler module. Falls back to Gemini if online
- * and no local command matches.
+ * and dispatches to the appropriate handler module.
+ *
+ * Priority order for classification (most specific first):
+ * 1. Pending state (contact selection)
+ * 2. Media (YouTube / Spotify)
+ * 3. Communication (SMS / WhatsApp)
+ * 4. Scheduling (Alarm / Timer / Calendar)
+ * 5. Navigation / Nearby
+ * 6. Web (Search / Weather / News)
+ * 7. System controls
+ * 8. Core commands (call, open, battery, etc.)
+ * 9. Fallback to AI (Gemini online or local offline)
  */
 public class CommandRouter {
 
@@ -29,6 +45,11 @@ public class CommandRouter {
     private final AppCommands appCommands;
     private final PhoneCommands phoneCommands;
     private final SystemCommands systemCommands;
+    private final MediaCommands mediaCommands;
+    private final CommunicationCommands communicationCommands;
+    private final SchedulerCommands schedulerCommands;
+    private final WebCommands webCommands;
+    private final ExternalNavigationCommands externalNavigationCommands;
     private final EmergencyManager emergencyManager;
     private final OfflineInferenceManager inferenceManager;
     private final TTSManager tts;
@@ -41,6 +62,11 @@ public class CommandRouter {
         this.appCommands = new AppCommands(context);
         this.phoneCommands = new PhoneCommands(context);
         this.systemCommands = new SystemCommands(context);
+        this.mediaCommands = new MediaCommands(context);
+        this.communicationCommands = new CommunicationCommands(context);
+        this.schedulerCommands = new SchedulerCommands(context);
+        this.webCommands = new WebCommands(context);
+        this.externalNavigationCommands = new ExternalNavigationCommands(context);
         this.emergencyManager = new EmergencyManager(context);
         this.inferenceManager = new OfflineInferenceManager(context);
     }
@@ -53,6 +79,62 @@ public class CommandRouter {
         VoiceCommand command = classify(rawText);
 
         switch (command.getCommandType()) {
+
+            // ── Media ───────────────────────────────────────────────────────
+            case YOUTUBE_PLAY:
+                mediaCommands.playOnYouTube(rawText, callback);
+                break;
+
+            case SPOTIFY_PLAY:
+                mediaCommands.playOnSpotify(rawText, callback);
+                break;
+
+            // ── Communication ───────────────────────────────────────────────
+            case SEND_SMS:
+                communicationCommands.sendSms(rawText, callback);
+                break;
+
+            case SEND_WHATSAPP:
+                communicationCommands.sendWhatsApp(rawText, callback);
+                break;
+
+            // ── Scheduling ──────────────────────────────────────────────────
+            case SET_ALARM:
+                schedulerCommands.setAlarm(rawText, callback);
+                break;
+
+            case SET_TIMER:
+                schedulerCommands.setTimer(rawText, callback);
+                break;
+
+            case CREATE_CALENDAR_EVENT:
+                schedulerCommands.createCalendarEvent(rawText, callback);
+                break;
+
+            // ── Navigation / Nearby ─────────────────────────────────────────
+            case NAVIGATE:
+                // First try ExternalNavigationCommands (no API key needed)
+                externalNavigationCommands.navigateTo(rawText, callback);
+                break;
+
+            case NEARBY_SEARCH:
+                externalNavigationCommands.findNearby(rawText, callback);
+                break;
+
+            // ── Web ─────────────────────────────────────────────────────────
+            case WEB_SEARCH:
+                webCommands.performWebSearch(rawText, callback);
+                break;
+
+            case WEATHER_CHECK:
+                webCommands.checkWeather(rawText, callback);
+                break;
+
+            case NEWS_CHECK:
+                webCommands.showNews(rawText, callback);
+                break;
+
+            // ── App / Phone / Core ──────────────────────────────────────────
             case OPEN_APP:
                 appCommands.openApp(rawText, callback);
                 break;
@@ -84,21 +166,22 @@ public class CommandRouter {
                 launchCameraActivity(command.getCommandType(), callback);
                 break;
 
-            case NAVIGATE:
-                String destination = extractDestination(rawText);
-                NavigationAssistant nav = new NavigationAssistant(context);
-                nav.navigateTo(destination, callback);
-                break;
-
             case EMERGENCY_SOS:
                 emergencyManager.triggerSOS(callback);
                 break;
 
-            case READ_NOTIFICATIONS:
-                String msg = "Opening notification reader.";
-                tts.speak(msg);
-                callback.onResult(msg);
+            case READ_NOTIFICATIONS: {
+                NotificationReaderService notifService = NotificationReaderService.getInstance();
+                if (notifService != null) {
+                    tts.speak("Reading your notifications.");
+                    notifService.readAllActiveNotifications(tts);
+                } else {
+                    String msg = "Notification access is not granted. Please enable EchoVision in Notification Access settings.";
+                    tts.speak(msg);
+                    callback.onResult(msg);
+                }
                 break;
+            }
 
             case HELP:
                 systemCommands.readHelp(callback);
@@ -108,35 +191,36 @@ public class CommandRouter {
                 tts.stop();
                 callback.onResult("Stopped.");
                 break;
-            
+
+            // ── System Controls ─────────────────────────────────────────────
             case TOGGLE_WIFI:
                 systemCommands.toggleWifi(callback);
                 break;
-                
+
             case TOGGLE_BLUETOOTH:
                 systemCommands.toggleBluetooth(callback);
                 break;
-                
+
             case TOGGLE_DATA:
                 systemCommands.toggleMobileData(callback);
                 break;
-                
+
             case TOGGLE_FLASHLIGHT:
                 systemCommands.toggleFlashlight(rawText, callback);
                 break;
-                
+
             case TOGGLE_AIRPLANE_MODE:
                 systemCommands.toggleAirplaneMode(callback);
                 break;
-                
+
             case SET_VOLUME:
                 systemCommands.setVolume(rawText, callback);
                 break;
-                
+
             case SET_BRIGHTNESS:
                 systemCommands.setBrightness(rawText, callback);
                 break;
-                
+
             case TOGGLE_DND:
                 systemCommands.toggleDND(callback);
                 break;
@@ -163,10 +247,92 @@ public class CommandRouter {
 
     /**
      * Classifies raw text into a VoiceCommand by keyword matching.
+     * More specific patterns are checked before generic ones to avoid false positives.
      */
     private VoiceCommand classify(String text) {
         String t = text.toLowerCase().trim();
 
+        // ── Check for pending contact state first ─────────────────────────
+        if (phoneCommands.hasPendingContacts()) {
+            if (t.contains("option") || t.contains("number") || t.contains("choice") ||
+                t.matches(".*\\bone\\b.*") || t.matches(".*\\btwo\\b.*") ||
+                t.matches(".*\\bthree\\b.*") || t.matches(".*\\bfour\\b.*") ||
+                t.matches(".*\\bfive\\b.*") || t.contains("1") || t.contains("2") ||
+                t.contains("3") || t.contains("4") || t.contains("5")) {
+                return new VoiceCommand(text, VoiceCommand.CommandType.SELECT_CONTACT);
+            }
+        }
+
+        // ── Emergency (highest priority after state) ──────────────────────
+        if (t.contains(AppConstants.CMD_SOS) || t.contains(AppConstants.CMD_EMERGENCY)
+                || t.contains("help me")) {
+            return new VoiceCommand(text, VoiceCommand.CommandType.EMERGENCY_SOS);
+        }
+
+        // ── Media ─────────────────────────────────────────────────────────
+        // Check YouTube: "play X on youtube" or "youtube X" or "play X youtube"
+        if (t.contains(AppConstants.CMD_YOUTUBE) ||
+                (t.contains(AppConstants.CMD_PLAY) && t.contains("youtube"))) {
+            return new VoiceCommand(text, VoiceCommand.CommandType.YOUTUBE_PLAY);
+        }
+        // Check Spotify
+        if (t.contains(AppConstants.CMD_SPOTIFY) ||
+                (t.contains(AppConstants.CMD_PLAY) && t.contains("spotify"))) {
+            return new VoiceCommand(text, VoiceCommand.CommandType.SPOTIFY_PLAY);
+        }
+
+        // ── Communication ─────────────────────────────────────────────────
+        // WhatsApp before SMS (more specific)
+        if (t.contains(AppConstants.CMD_WHATSAPP)) {
+            return new VoiceCommand(text, VoiceCommand.CommandType.SEND_WHATSAPP);
+        }
+        // SMS / text message
+        if ((t.contains(AppConstants.CMD_SEND) || t.contains("text")) &&
+                (t.contains(AppConstants.CMD_SMS) || t.contains("message") || t.contains("text"))) {
+            return new VoiceCommand(text, VoiceCommand.CommandType.SEND_SMS);
+        }
+
+        // ── Scheduling ────────────────────────────────────────────────────
+        // Timer before alarm (both might contain "set")
+        if (t.contains(AppConstants.CMD_TIMER) || t.contains("countdown")) {
+            return new VoiceCommand(text, VoiceCommand.CommandType.SET_TIMER);
+        }
+        if (t.contains(AppConstants.CMD_ALARM) || t.contains("wake me up") ||
+                t.contains("wake me at")) {
+            return new VoiceCommand(text, VoiceCommand.CommandType.SET_ALARM);
+        }
+        if (t.contains(AppConstants.CMD_CALENDAR) || t.contains(AppConstants.CMD_REMINDER) ||
+                t.contains(AppConstants.CMD_EVENT) || t.contains(AppConstants.CMD_SCHEDULE)) {
+            return new VoiceCommand(text, VoiceCommand.CommandType.CREATE_CALENDAR_EVENT);
+        }
+
+        // ── Navigation / Nearby ───────────────────────────────────────────
+        // Nearby before navigate (e.g. "find nearby restaurants")
+        if (t.contains(AppConstants.CMD_NEARBY) || t.contains("near me") ||
+                t.contains("close to me") || t.contains("closest") ||
+                t.contains("nearest") || t.contains("find near")) {
+            return new VoiceCommand(text, VoiceCommand.CommandType.NEARBY_SEARCH);
+        }
+        if (t.contains(AppConstants.CMD_NAVIGATE) || t.contains("go to") ||
+                t.contains("directions to") || t.contains("take me to") ||
+                t.contains("drive to") || t.contains("open maps")) {
+            return new VoiceCommand(text, VoiceCommand.CommandType.NAVIGATE);
+        }
+
+        // ── Web ───────────────────────────────────────────────────────────
+        // Weather before generic search to avoid "weather" → search
+        if (t.contains(AppConstants.CMD_WEATHER)) {
+            return new VoiceCommand(text, VoiceCommand.CommandType.WEATHER_CHECK);
+        }
+        if (t.contains(AppConstants.CMD_NEWS) || t.contains("headlines")) {
+            return new VoiceCommand(text, VoiceCommand.CommandType.NEWS_CHECK);
+        }
+        if (t.contains(AppConstants.CMD_SEARCH) || t.contains(AppConstants.CMD_GOOGLE)
+                || t.startsWith("what is") || t.startsWith("who is") || t.startsWith("how to")) {
+            return new VoiceCommand(text, VoiceCommand.CommandType.WEB_SEARCH);
+        }
+
+        // ── App / Phone / Core ────────────────────────────────────────────
         if (t.contains(AppConstants.CMD_OPEN) || t.contains("launch") || t.startsWith("start ")) {
             return new VoiceCommand(text, VoiceCommand.CommandType.OPEN_APP);
         }
@@ -194,13 +360,6 @@ public class CommandRouter {
         if (t.contains("read text") || t.contains("ocr") || t.contains("read the text")) {
             return new VoiceCommand(text, VoiceCommand.CommandType.CAMERA_OCR);
         }
-        if (t.contains(AppConstants.CMD_NAVIGATE) || t.contains("go to") || t.contains("directions")) {
-            return new VoiceCommand(text, VoiceCommand.CommandType.NAVIGATE);
-        }
-        if (t.contains(AppConstants.CMD_SOS) || t.contains(AppConstants.CMD_EMERGENCY)
-                || t.contains("help me")) {
-            return new VoiceCommand(text, VoiceCommand.CommandType.EMERGENCY_SOS);
-        }
         if (t.contains(AppConstants.CMD_NOTIFICATIONS) || t.contains("message")) {
             return new VoiceCommand(text, VoiceCommand.CommandType.READ_NOTIFICATIONS);
         }
@@ -211,7 +370,7 @@ public class CommandRouter {
             return new VoiceCommand(text, VoiceCommand.CommandType.STOP);
         }
 
-        // System Controls
+        // ── System Controls ───────────────────────────────────────────────
         if (t.contains(AppConstants.CMD_WIFI)) {
             return new VoiceCommand(text, VoiceCommand.CommandType.TOGGLE_WIFI);
         }
@@ -227,7 +386,8 @@ public class CommandRouter {
         if (t.contains(AppConstants.CMD_AIRPLANE)) {
             return new VoiceCommand(text, VoiceCommand.CommandType.TOGGLE_AIRPLANE_MODE);
         }
-        if (t.contains(AppConstants.CMD_VOLUME) || t.contains("sound") || t.contains("louder") || t.contains("quieter")) {
+        if (t.contains(AppConstants.CMD_VOLUME) || t.contains("sound") ||
+                t.contains("louder") || t.contains("quieter")) {
             return new VoiceCommand(text, VoiceCommand.CommandType.SET_VOLUME);
         }
         if (t.contains(AppConstants.CMD_BRIGHTNESS) || t.contains("light") || t.contains("darker")) {
@@ -246,17 +406,6 @@ public class CommandRouter {
             return new VoiceCommand(text, VoiceCommand.CommandType.TOGGLE_LOCATION);
         }
 
-        // Check for contact selection if pending
-        if (phoneCommands.hasPendingContacts()) {
-            if (t.contains("option") || t.contains("number") || t.contains("choice") ||
-                t.matches(".*\\bone\\b.*") || t.matches(".*\\btwo\\b.*") ||
-                t.matches(".*\\bthree\\b.*") || t.matches(".*\\bfour\\b.*") ||
-                t.matches(".*\\bfive\\b.*") || t.contains("1") || t.contains("2") ||
-                t.contains("3") || t.contains("4") || t.contains("5")) {
-                return new VoiceCommand(text, VoiceCommand.CommandType.SELECT_CONTACT);
-            }
-        }
-
         return new VoiceCommand(text, VoiceCommand.CommandType.GEMINI_QUERY);
     }
 
@@ -268,14 +417,5 @@ public class CommandRouter {
         String response = "Opening camera.";
         tts.speak(response);
         callback.onResult(response);
-    }
-
-    private String extractDestination(String text) {
-        return text.toLowerCase()
-                .replace("navigate to", "")
-                .replace("go to", "")
-                .replace("directions to", "")
-                .replace("take me to", "")
-                .trim();
     }
 }

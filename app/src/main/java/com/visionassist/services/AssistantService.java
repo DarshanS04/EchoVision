@@ -75,11 +75,22 @@ public class AssistantService extends Service {
         // Init on main thread (SpeechRecognizer requires Looper)
         mainHandler.post(() -> speechRecognizerManager.init());
 
-        // Volume button trigger
+        // Volume button trigger (implements both simultaneous press & long press)
         volumeButtonTrigger = new VolumeButtonTrigger(this);
-        volumeButtonTrigger.setCallback(() -> {
-            AppLogger.i(TAG, "Volume trigger — starting listening");
-            startListening();
+        volumeButtonTrigger.setCallback(new VolumeButtonTrigger.TriggerCallback() {
+            @Override
+            public void onTriggerActivated() {
+                AppLogger.i(TAG, "Volume dual-press trigger — starting listening");
+                tts.speak("Listening.");
+                startListening();
+            }
+
+            @Override
+            public void onLongPressActivated() {
+                AppLogger.i(TAG, "Volume long-press trigger — starting listening");
+                tts.speak("Listening.");
+                startListening();
+            }
         });
     }
 
@@ -123,8 +134,8 @@ public class AssistantService extends Service {
                 this, 0, notificationIntent, PendingIntent.FLAG_IMMUTABLE);
 
         return new NotificationCompat.Builder(this, AppConstants.NOTIFICATION_CHANNEL_ASSISTANT)
-                .setContentTitle("VisionAssist Active")
-                .setContentText("Press Vol Up + Vol Down to activate the assistant")
+                .setContentTitle("EchoVision Active")
+                .setContentText("Long-press Vol Up (or Vol Up+Down) to activate assistant")
                 .setSmallIcon(R.drawable.ic_assistant)
                 .setContentIntent(pendingIntent)
                 .setOngoing(true)

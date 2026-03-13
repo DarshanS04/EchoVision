@@ -243,10 +243,16 @@ public class SystemCommands {
      */
     public void readHelp(CommandRouter.CommandCallback callback) {
         String help = "You can say: Open [app name]. Call [contact name]. "
-                + "Read notifications. What is in front of me. "
-                + "Navigate to [place]. Battery status. What time is it. "
-                + "Turn on flashlight. Set volume up. Wifi settings. "
-                + "Scan barcode. Read text. S O S for emergency.";
+                + "Send S M S to [name] saying [message]. WhatsApp [name] saying [message]. "
+                + "Play [song] on YouTube. Play [song] on Spotify. "
+                + "Set alarm for [time]. Set timer for [duration]. "
+                + "Navigate to [place]. Find nearby [restaurants or hospitals]. "
+                + "Search for [topic]. What is the weather. Show me the news. "
+                + "Create calendar event for [title]. "
+                + "Read notifications. What is in front of me. Battery status. "
+                + "Turn on flashlight. Set volume up. Wi-Fi settings. "
+                + "Scan barcode. Read text. S O S for emergency. "
+                + "Long press Volume Up or press Volume Up and Down together to activate me.";
         tts.speak(help);
         callback.onResult(help);
     }

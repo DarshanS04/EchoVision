@@ -44,18 +44,32 @@ public class VisionAccessibilityService extends AccessibilityService {
         tts = TTSManager.getInstance(this);
         screenReader = new ScreenReader(this);
         volumeButtonTrigger = new VolumeButtonTrigger(this);
-        volumeButtonTrigger.setCallback(() -> {
-            AppLogger.i(TAG, "Volume trigger in AccessibilityService");
-            Intent intent = new Intent(this, com.visionassist.services.AssistantService.class);
-            intent.setAction(AppConstants.ACTION_START_LISTENING);
-            try {
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                    startForegroundService(intent);
-                } else {
-                    startService(intent);
+        volumeButtonTrigger.setCallback(new VolumeButtonTrigger.TriggerCallback() {
+            @Override
+            public void onTriggerActivated() {
+                AppLogger.i(TAG, "Volume trigger in AccessibilityService");
+                startAssistant();
+            }
+
+            @Override
+            public void onLongPressActivated() {
+                AppLogger.i(TAG, "Volume long-press in AccessibilityService");
+                startAssistant();
+            }
+
+            private void startAssistant() {
+                Intent intent = new Intent(VisionAccessibilityService.this,
+                        com.visionassist.services.AssistantService.class);
+                intent.setAction(AppConstants.ACTION_START_LISTENING);
+                try {
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                        startForegroundService(intent);
+                    } else {
+                        startService(intent);
+                    }
+                } catch (Exception e) {
+                    AppLogger.e(TAG, "Failed to start AssistantService from accessibility: " + e.getMessage());
                 }
-            } catch (Exception e) {
-                AppLogger.e(TAG, "Failed to start AssistantService from accessibility: " + e.getMessage());
             }
         });
 
@@ -68,12 +82,15 @@ public class VisionAccessibilityService extends AccessibilityService {
                 | AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED;
         info.feedbackType = AccessibilityServiceInfo.FEEDBACK_SPOKEN;
         info.notificationTimeout = 300;
+        // FLAG_REQUEST_FILTER_KEY_EVENTS is critical — it tells Android to route
+        // hardware key events (volume buttons) to this service EVEN when other
+        // apps like YouTube are in the foreground.
         info.flags = AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS
-                | AccessibilityServiceInfo.FLAG_REQUEST_TOUCH_EXPLORATION_MODE;
+                | AccessibilityServiceInfo.FLAG_REQUEST_TOUCH_EXPLORATION_MODE
+                | AccessibilityServiceInfo.FLAG_REQUEST_FILTER_KEY_EVENTS;
         setServiceInfo(info);
 
-        tts.speak(
-                "VisionAssist accessibility service is active. Press volume up and down together to activate the assistant.");
+        tts.speak("EchoVision accessibility service is active. Long press volume up to activate the assistant.");
     }
 
     @Override

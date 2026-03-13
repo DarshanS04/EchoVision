@@ -120,6 +120,16 @@ public class SettingsActivity extends AppCompatActivity {
             testBtn.setOnClickListener(v ->
                     tts.speak("This is how VisionAssist will sound with your current settings."));
         }
+
+        // Notification Switch
+        notificationSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked && !isNotificationServiceEnabled()) {
+                android.content.Intent intent = new android.content.Intent(
+                        android.provider.Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS);
+                startActivity(intent);
+                Toast.makeText(this, "Please enable notification access for VisionAssist.", Toast.LENGTH_LONG).show();
+            }
+        });
     }
 
     private void saveSettings() {
@@ -136,6 +146,31 @@ public class SettingsActivity extends AppCompatActivity {
         AppLogger.i(TAG, "Settings saved");
         Toast.makeText(this, "Settings saved", Toast.LENGTH_SHORT).show();
         tts.speak("Settings saved successfully.");
+    }
+
+    private boolean isNotificationServiceEnabled() {
+        String pkgName = getPackageName();
+        final String flat = android.provider.Settings.Secure.getString(getContentResolver(), "enabled_notification_listeners");
+        if (flat != null && !flat.isEmpty()) {
+            final String[] names = flat.split(":");
+            for (String name : names) {
+                final android.content.ComponentName cn = android.content.ComponentName.unflattenFromString(name);
+                if (cn != null && cn.getPackageName().equals(pkgName)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (notificationSwitch.isChecked() && !isNotificationServiceEnabled()) {
+            // Permission was revoked or not granted
+            notificationSwitch.setChecked(false);
+            prefs.setReadNotifications(false);
+        }
     }
 
     @Override

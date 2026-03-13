@@ -179,6 +179,10 @@ public class CommandRouter {
                     String msg = "Notification access is not granted. Please enable EchoVision in Notification Access settings.";
                     tts.speak(msg);
                     callback.onResult(msg);
+                    
+                    Intent intent = new Intent(android.provider.Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    context.startActivity(intent);
                 }
                 break;
             }
@@ -360,7 +364,7 @@ public class CommandRouter {
         if (t.contains("read text") || t.contains("ocr") || t.contains("read the text")) {
             return new VoiceCommand(text, VoiceCommand.CommandType.CAMERA_OCR);
         }
-        if (t.contains(AppConstants.CMD_NOTIFICATIONS) || t.contains("message")) {
+        if (t.contains(AppConstants.CMD_NOTIFICATIONS) || t.contains("notification") || t.contains("message")) {
             return new VoiceCommand(text, VoiceCommand.CommandType.READ_NOTIFICATIONS);
         }
         if (t.contains(AppConstants.CMD_HELP) || t.contains("what can you do")) {

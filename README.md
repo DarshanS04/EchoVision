@@ -116,13 +116,21 @@ Opens the device's default browser — no API key.
 
 ---
 
+### 📱 Screen Reader
+| Voice Command | What Happens |
+|---|---|
+| `What is on my screen` | Reads the current screen content aloud |
+
+> **Requirement:** Requires the **EchoVision Accessibility Service** to be active.
+
+---
+
 ### 📷 Camera Features
 | Voice Command | What Happens |
 |---|---|
 | `What is in front of me` | Describes objects/scene using camera + AI |
 | `Read text` / `OCR` | Reads text in front of the camera |
 | `Scan barcode` / `Scan QR` | Scans and reads the barcode/QR value |
-| `What is on my screen` | Reads the current screen content aloud |
 
 ---
 

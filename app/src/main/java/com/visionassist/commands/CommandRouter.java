@@ -162,8 +162,21 @@ public class CommandRouter {
             case CAMERA_DETECT:
             case CAMERA_OCR:
             case CAMERA_BARCODE:
-            case READ_SCREEN:
                 launchCameraActivity(command.getCommandType(), callback);
+                break;
+
+            case READ_SCREEN:
+                com.visionassist.accessibility.VisionAccessibilityService accessibilityService = 
+                        com.visionassist.accessibility.VisionAccessibilityService.getInstance();
+                if (accessibilityService != null) {
+                    String screenDesc = accessibilityService.getCurrentScreenDescription();
+                    tts.speak(screenDesc);
+                    callback.onResult(screenDesc);
+                } else {
+                    String msg = "Accessibility service is not running. Please enable EchoVision in Accessibility settings.";
+                    tts.speak(msg);
+                    callback.onResult(msg);
+                }
                 break;
 
             case EMERGENCY_SOS:

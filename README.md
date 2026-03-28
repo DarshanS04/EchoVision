@@ -138,6 +138,7 @@ Opens the device's default browser — no API key.
 | Voice Command | What Happens |
 |---|---|
 | `Battery status` | Reads battery percentage aloud |
+| `Go to home` | Goes to the device's home screen |
 | `What time is it` | Reads current time |
 | `What is today's date` | Reads today's date |
 | `Turn on flashlight` | Toggles torch on/off |

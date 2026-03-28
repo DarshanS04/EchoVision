@@ -46,6 +46,7 @@ public class VoiceCommand {
         WEATHER_CHECK,
         NEWS_CHECK,
         NEARBY_SEARCH,
+        GO_HOME,
         UNKNOWN
     }
 

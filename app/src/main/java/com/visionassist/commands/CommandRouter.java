@@ -200,6 +200,10 @@ public class CommandRouter {
                 break;
             }
 
+            case GO_HOME:
+                systemCommands.goToHome(callback);
+                break;
+
             case HELP:
                 systemCommands.readHelp(callback);
                 break;
@@ -324,6 +328,10 @@ public class CommandRouter {
         }
 
         // ── Navigation / Nearby ───────────────────────────────────────────
+        if (t.contains("go to home") || t.contains("go home") || t.contains("home screen") || t.equals("home")) {
+            return new VoiceCommand(text, VoiceCommand.CommandType.GO_HOME);
+        }
+
         // Nearby before navigate (e.g. "find nearby restaurants")
         if (t.contains(AppConstants.CMD_NEARBY) || t.contains("near me") ||
                 t.contains("close to me") || t.contains("closest") ||

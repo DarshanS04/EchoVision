@@ -22,7 +22,7 @@ public class ObjectDetector {
 
     private static final String TAG = "ObjectDetector";
     private static final int NUM_DETECTIONS = 10;
-    private static final int BYTES_PER_CHANNEL = 4; // float32
+    private static final int BYTES_PER_CHANNEL = 1; // UINT8
 
     private final Context context;
     private final TFLiteModelLoader modelLoader;
@@ -135,9 +135,9 @@ public class ObjectDetector {
         bitmap.getPixels(pixels, 0, inputSize, 0, 0, inputSize, inputSize);
 
         for (int pixel : pixels) {
-            byteBuffer.putFloat(((pixel >> 16) & 0xFF) / 255.0f); // R
-            byteBuffer.putFloat(((pixel >> 8) & 0xFF) / 255.0f);  // G
-            byteBuffer.putFloat((pixel & 0xFF) / 255.0f);          // B
+            byteBuffer.put((byte) ((pixel >> 16) & 0xFF)); // R
+            byteBuffer.put((byte) ((pixel >> 8) & 0xFF));  // G
+            byteBuffer.put((byte) (pixel & 0xFF));          // B
         }
         return byteBuffer;
     }

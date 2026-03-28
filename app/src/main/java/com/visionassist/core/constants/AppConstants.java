@@ -12,7 +12,7 @@ public final class AppConstants {
     public static final String GEMINI_VISION_MODEL = "gemini-2.5-flash";
 
     // TFLite Model
-    public static final String TFLITE_MODEL_PATH = "models/object_detection.tflite";
+    public static final String TFLITE_MODEL_PATH = "models/ssd_mobilenet_v1_1_metadata_1.tflite";
     public static final String TFLITE_LABELS_PATH = "models/labelmap.txt";
     public static final int TFLITE_INPUT_SIZE = 300;
     public static final float DETECTION_CONFIDENCE_THRESHOLD = 0.5f;

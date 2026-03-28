@@ -28,9 +28,11 @@ public class BackgroundProcessingService extends Service {
      * Submit a background task.
      */
     public static void submit(Runnable task) {
-        if (executor != null && !executor.isShutdown()) {
-            executor.submit(task);
+        if (executor == null || executor.isShutdown()) {
+            executor = Executors.newFixedThreadPool(2);
+            AppLogger.i(TAG, "BackgroundProcessingService executor lazily initialized");
         }
+        executor.submit(task);
     }
 
     @Override

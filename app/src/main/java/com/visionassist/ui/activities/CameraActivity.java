@@ -2,6 +2,7 @@ package com.visionassist.ui.activities;
 
 import android.graphics.Bitmap;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
@@ -103,27 +104,32 @@ public class CameraActivity extends AppCompatActivity {
         statusText.setText("Detecting objects...");
         analysisRunning = true;
 
+        Log.d("DETECT", "in triggerDetect()");
+        
         Bitmap bitmap = previewView.getBitmap();
         if (bitmap == null) {
+            Log.d("DETECT", "in bitmapNull");
             tts.speak("Could not capture image.");
             analysisRunning = false;
             return;
         }
-
+        
         BackgroundProcessingService.submit(() -> {
             objectDetector.detect(bitmap, new ObjectDetector.DetectionCallback() {
                 @Override
                 public void onDetected(List<DetectionResult> results) {
                     runOnUiThread(() -> {
+                        Log.d("DETECT", "in thread of detect -- complete");
                         objectDetector.speakResults(results);
                         statusText.setText("Detection complete.");
                         analysisRunning = false;
                     });
                 }
-
+                
                 @Override
                 public void onError(String error) {
                     runOnUiThread(() -> {
+                        Log.d("DETECT", "in thread of detect -- failed");
                         tts.speak("Detection failed.");
                         statusText.setText("Detection error.");
                         analysisRunning = false;

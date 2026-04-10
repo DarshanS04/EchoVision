@@ -73,11 +73,7 @@ public class AIScreenParser {
                 if (!nodeDesc.isEmpty()) obj.put("desc", nodeDesc);
                 if (clickable) obj.put("clickable", true);
                 if (editable) obj.put("editable", true);
-                
-                CharSequence className = node.getClassName();
-                if (className != null) {
-                    obj.put("class", className.toString());
-                }
+                // "class" is no longer included to minimize tokens
 
                 array.put(obj);
                 // obtain a copy for caching, it's very important to do so 

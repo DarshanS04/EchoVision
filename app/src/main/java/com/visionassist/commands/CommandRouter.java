@@ -17,7 +17,7 @@ import com.visionassist.navigation.NavigationAssistant;
 import com.visionassist.services.NotificationReaderService;
 import com.visionassist.ui.activities.CameraActivity;
 import com.visionassist.voice.tts.TTSManager;
-import com.visionassist.navigation.AppCommandNavigator;
+import com.visionassist.navigation.AdvanceAssistManager;
 
 /**
  * Central command router. Receives raw voice text, classifies it into a VoiceCommand
@@ -55,7 +55,7 @@ public class CommandRouter {
     private final OfflineInferenceManager inferenceManager;
     private final TTSManager tts;
     private final AppRepository repository;
-    private final AppCommandNavigator appCommandNavigator;
+    private final AdvanceAssistManager advanceAssistManager;
 
     public CommandRouter(Context context) {
         this.context = context.getApplicationContext();
@@ -71,7 +71,7 @@ public class CommandRouter {
         this.externalNavigationCommands = new ExternalNavigationCommands(context);
         this.emergencyManager = new EmergencyManager(context);
         this.inferenceManager = new OfflineInferenceManager(context);
-        this.appCommandNavigator = new AppCommandNavigator(context);
+        this.advanceAssistManager = new AdvanceAssistManager(context);
     }
 
     /**
@@ -81,16 +81,16 @@ public class CommandRouter {
         AppLogger.i(TAG, "Routing: " + rawText);
         VoiceCommand command = classify(rawText);
 
-        if (command.getCommandType() == VoiceCommand.CommandType.APP_NAVIGATION_STOP) {
-            appCommandNavigator.stopNavigation();
-            String response = "Exited app navigation mode.";
+        if (command.getCommandType() == VoiceCommand.CommandType.ADVANCE_ASSIST_STOP) {
+            advanceAssistManager.stopNavigation();
+            String response = "Exited advance assist mode.";
             tts.speak(response);
             callback.onResult(response);
             return;
         }
 
-        if (appCommandNavigator.isActive()) {
-            appCommandNavigator.processUserCommand(rawText, new AppCommandNavigator.ExecutionCallback() {
+        if (advanceAssistManager.isActive()) {
+            advanceAssistManager.processUserCommand(rawText, new AdvanceAssistManager.ExecutionCallback() {
                 @Override
                 public void onSuccess(String spokenResponse) {
                     tts.speak(spokenResponse);
@@ -286,9 +286,9 @@ public class CommandRouter {
                 systemCommands.toggleLocation(callback);
                 break;
 
-            case APP_NAVIGATION_START:
-                appCommandNavigator.startNavigation();
-                String msg = "App navigation mode started. What would you like to do on this screen?";
+            case ADVANCE_ASSIST_START:
+                advanceAssistManager.startNavigation();
+                String msg = "Advance assist mode started. What would you like to do on this screen?";
                 tts.speak(msg);
                 callback.onResult(msg);
                 break;
@@ -466,12 +466,12 @@ public class CommandRouter {
             return new VoiceCommand(text, VoiceCommand.CommandType.TOGGLE_LOCATION);
         }
 
-        if (t.equals("exit app navigation") || t.equals("stop navigation") || t.equals("stop app navigation") || t.equals("exit navigation")) {
-            return new VoiceCommand(text, VoiceCommand.CommandType.APP_NAVIGATION_STOP);
+        if (t.equals("exit advance assist") || t.equals("stop advance assist") || t.equals("stop advanced assist") || t.equals("exit assist")) {
+            return new VoiceCommand(text, VoiceCommand.CommandType.ADVANCE_ASSIST_STOP);
         }
 
-        if (t.equals("start app navigation") || t.equals("start navigation") || t.equals("start control")) {
-            return new VoiceCommand(text, VoiceCommand.CommandType.APP_NAVIGATION_START);
+        if (t.equals("start advance assist") || t.equals("start advanced assist") || t.equals("start advance assistance")) {
+            return new VoiceCommand(text, VoiceCommand.CommandType.ADVANCE_ASSIST_START);
         }
 
         return new VoiceCommand(text, VoiceCommand.CommandType.GEMINI_QUERY);

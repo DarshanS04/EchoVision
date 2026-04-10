@@ -10,11 +10,11 @@ import com.visionassist.core.logger.AppLogger;
 import org.json.JSONObject;
 
 /**
- * Orchestrates the AI App Navigation continuous loop.
+ * Orchestrates the Advance Assist continuous loop.
  */
-public class AppCommandNavigator {
+public class AdvanceAssistManager {
     
-    private static final String TAG = "AppCommandNavigator";
+    private static final String TAG = "AdvanceAssistManager";
     
     private final GeminiClient geminiClient;
     private boolean isActive = false;
@@ -27,7 +27,7 @@ public class AppCommandNavigator {
         void onError(String errorMessage);
     }
 
-    public AppCommandNavigator(Context context) {
+    public AdvanceAssistManager(Context context) {
         this.geminiClient = new GeminiClient(context);
     }
 
@@ -37,13 +37,13 @@ public class AppCommandNavigator {
 
     public void startNavigation() {
         isActive = true;
-        AppLogger.i(TAG, "App Navigation started.");
+        AppLogger.i(TAG, "Advance Assist started.");
     }
 
     public void stopNavigation() {
         isActive = false;
         cleanupLastScreen();
-        AppLogger.i(TAG, "App Navigation stopped.");
+        AppLogger.i(TAG, "Advance Assist stopped.");
     }
 
     public void processUserCommand(String command, ExecutionCallback callback) {

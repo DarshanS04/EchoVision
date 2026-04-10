@@ -125,16 +125,16 @@ Opens the device's default browser — no API key.
 
 ---
 
-### 🤖 AI App Navigation
-The AI App Navigation feature allows you to interact with *any* app dynamically using your voice. The system reads the screen, maps actionable items, passes the context to Gemini, and executes your intent seamlessly.
+### 🤖 Advance Assist
+The Advance Assist feature allows you to interact with *any* app dynamically using your voice. The system reads the screen, maps actionable items, passes the context to Gemini, and executes your intent seamlessly.
 
 | Voice Command | What Happens |
 |---|---|
-| `Start app navigation` | Enters a continuous loop mode waiting for your instruction on the current screen. |
+| `Start advance assist` | Enters a continuous loop mode waiting for your instruction on the current screen. |
 | `Click on the search button` | Finds the relevant button on screen and clicks it automatically. |
 | `Type shoes in the search field` | Focuses the desired text input and types "shoes". |
 | `Scroll down` | Scrolls the current page forward to reveal more content. |
-| `Exit app navigation` | Stops the continuous app control mode. |
+| `Exit advance assist` | Stops the continuous app control mode. |
 
 > **Requirement:** Requires the **EchoVision Accessibility Service** to be active and a **Gemini API key** for intelligent navigation.
 
@@ -227,7 +227,7 @@ com.visionassist/
 │   │   └── MediaCommands.java    — YouTube & Spotify deep-link playback
 │   ├── navigation/
 │   │   ├── ExternalNavigationCommands.java  — Maps navigation & nearby search
-│   │   └── AppCommandNavigator.java      — Continuous AI UI control orchestration
+│   │   └── AdvanceAssistManager.java      — Continuous AI UI control orchestration
 │   ├── scheduler/
 │   │   └── SchedulerCommands.java  — Alarms, timers, calendar
 │   └── web/

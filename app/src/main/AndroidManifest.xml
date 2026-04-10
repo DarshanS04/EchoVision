@@ -102,6 +102,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.VisionAssist"
         android:usesCleartextTraffic="false"
+        android:extractNativeLibs="true"
         tools:targetApi="31">
 
         <!-- ==================== ACTIVITIES ==================== -->

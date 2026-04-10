@@ -17,6 +17,7 @@ import com.visionassist.navigation.NavigationAssistant;
 import com.visionassist.services.NotificationReaderService;
 import com.visionassist.ui.activities.CameraActivity;
 import com.visionassist.voice.tts.TTSManager;
+import com.visionassist.navigation.AppCommandNavigator;
 
 /**
  * Central command router. Receives raw voice text, classifies it into a VoiceCommand
@@ -54,6 +55,7 @@ public class CommandRouter {
     private final OfflineInferenceManager inferenceManager;
     private final TTSManager tts;
     private final AppRepository repository;
+    private final AppCommandNavigator appCommandNavigator;
 
     public CommandRouter(Context context) {
         this.context = context.getApplicationContext();
@@ -69,6 +71,7 @@ public class CommandRouter {
         this.externalNavigationCommands = new ExternalNavigationCommands(context);
         this.emergencyManager = new EmergencyManager(context);
         this.inferenceManager = new OfflineInferenceManager(context);
+        this.appCommandNavigator = new AppCommandNavigator(context);
     }
 
     /**
@@ -77,6 +80,31 @@ public class CommandRouter {
     public void route(String rawText, CommandCallback callback) {
         AppLogger.i(TAG, "Routing: " + rawText);
         VoiceCommand command = classify(rawText);
+
+        if (command.getCommandType() == VoiceCommand.CommandType.APP_NAVIGATION_STOP) {
+            appCommandNavigator.stopNavigation();
+            String response = "Exited app navigation mode.";
+            tts.speak(response);
+            callback.onResult(response);
+            return;
+        }
+
+        if (appCommandNavigator.isActive()) {
+            appCommandNavigator.processUserCommand(rawText, new AppCommandNavigator.ExecutionCallback() {
+                @Override
+                public void onSuccess(String spokenResponse) {
+                    tts.speak(spokenResponse);
+                    callback.onResult(spokenResponse);
+                }
+
+                @Override
+                public void onError(String errorMessage) {
+                    tts.speak(errorMessage);
+                    callback.onResult(errorMessage);
+                }
+            });
+            return;
+        }
 
         switch (command.getCommandType()) {
 
@@ -258,6 +286,13 @@ public class CommandRouter {
                 systemCommands.toggleLocation(callback);
                 break;
 
+            case APP_NAVIGATION_START:
+                appCommandNavigator.startNavigation();
+                String msg = "App navigation mode started. What would you like to do on this screen?";
+                tts.speak(msg);
+                callback.onResult(msg);
+                break;
+
             case GEMINI_QUERY:
             default:
                 // Fall back to AI layer (Gemini online, or local offline)
@@ -429,6 +464,14 @@ public class CommandRouter {
         }
         if (t.contains(AppConstants.CMD_LOCATION) || t.contains("gps")) {
             return new VoiceCommand(text, VoiceCommand.CommandType.TOGGLE_LOCATION);
+        }
+
+        if (t.equals("exit app navigation") || t.equals("stop navigation") || t.equals("stop app navigation") || t.equals("exit navigation")) {
+            return new VoiceCommand(text, VoiceCommand.CommandType.APP_NAVIGATION_STOP);
+        }
+
+        if (t.equals("start app navigation") || t.equals("start navigation") || t.equals("start control")) {
+            return new VoiceCommand(text, VoiceCommand.CommandType.APP_NAVIGATION_START);
         }
 
         return new VoiceCommand(text, VoiceCommand.CommandType.GEMINI_QUERY);

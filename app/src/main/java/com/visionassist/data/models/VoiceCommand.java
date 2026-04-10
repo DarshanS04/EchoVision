@@ -47,6 +47,8 @@ public class VoiceCommand {
         NEWS_CHECK,
         NEARBY_SEARCH,
         GO_HOME,
+        APP_NAVIGATION_START,
+        APP_NAVIGATION_STOP,
         UNKNOWN
     }
 

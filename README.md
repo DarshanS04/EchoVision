@@ -125,6 +125,21 @@ Opens the device's default browser — no API key.
 
 ---
 
+### 🤖 AI App Navigation
+The AI App Navigation feature allows you to interact with *any* app dynamically using your voice. The system reads the screen, maps actionable items, passes the context to Gemini, and executes your intent seamlessly.
+
+| Voice Command | What Happens |
+|---|---|
+| `Start app navigation` | Enters a continuous loop mode waiting for your instruction on the current screen. |
+| `Click on the search button` | Finds the relevant button on screen and clicks it automatically. |
+| `Type shoes in the search field` | Focuses the desired text input and types "shoes". |
+| `Scroll down` | Scrolls the current page forward to reveal more content. |
+| `Exit app navigation` | Stops the continuous app control mode. |
+
+> **Requirement:** Requires the **EchoVision Accessibility Service** to be active and a **Gemini API key** for intelligent navigation.
+
+---
+
 ### 📷 Camera Features
 When triggered by voice, camera features run either continuously or automatically without needing extra taps. When launched via the main menu's camera button, you maintain manual control.
 
@@ -211,7 +226,8 @@ com.visionassist/
 │   ├── media/
 │   │   └── MediaCommands.java    — YouTube & Spotify deep-link playback
 │   ├── navigation/
-│   │   └── ExternalNavigationCommands.java  — Maps navigation & nearby search
+│   │   ├── ExternalNavigationCommands.java  — Maps navigation & nearby search
+│   │   └── AppCommandNavigator.java      — Continuous AI UI control orchestration
 │   ├── scheduler/
 │   │   └── SchedulerCommands.java  — Alarms, timers, calendar
 │   └── web/
@@ -222,7 +238,8 @@ com.visionassist/
 ├── triggers/
 │   └── VolumeButtonTrigger.java  — Long-press & dual-button activation
 └── accessibility/
-    └── VisionAccessibilityService.java  — Key event interception across all apps
+    ├── VisionAccessibilityService.java  — Key event interception across all apps
+    └── AIScreenParser.java          — UI tree traversal for Gemini context
 ```
 
 ---

@@ -167,6 +167,63 @@ public class GeminiClient {
                         .put("maxOutputTokens", 512));
     }
 
+    private JSONObject buildTextRequestWithJson(String prompt) throws JSONException {
+        JSONObject part = new JSONObject().put("text", prompt);
+        JSONArray parts = new JSONArray().put(part);
+        JSONObject content = new JSONObject().put("parts", parts);
+        JSONArray contents = new JSONArray().put(content);
+        return new JSONObject()
+                .put("contents", contents)
+                .put("generationConfig", new JSONObject()
+                        .put("temperature", 0.1)
+                        .put("responseMimeType", "application/json")
+                        .put("maxOutputTokens", 512));
+    }
+
+    /**
+     * Send a query to Gemini for App Navigation (forcing JSON output).
+     */
+    public void sendAppControlQuery(String userCommand, String screenJson, String contextStr, GeminiCallback callback) {
+        if (!repository.shouldUseGemini()) {
+            callback.onError("Offline mode is enabled.");
+            return;
+        }
+        String apiKey = repository.getGeminiApiKey();
+        if (apiKey == null || apiKey.isEmpty()) {
+            callback.onError("Gemini API key not configured.");
+            return;
+        }
+
+        String prompt = "You are an AI assistant helping a blind user operate ANY Android app.\n" +
+                "You are given:\n" +
+                "1. A list of UI elements with IDs (JSON)\n" +
+                "2. A user command\n" +
+                "3. Context\n\n" +
+                "Your job: Return EXACTLY ONE action in JSON.\n" +
+                "STRICT RULES:\n" +
+                "- Only use provided element IDs\n" +
+                "- Do NOT assume UI\n" +
+                "- Do NOT hallucinate\n" +
+                "- Prefer safest meaningful action\n" +
+                "- If multiple similar elements -> choose most relevant\n" +
+                "- If unclear -> return 'ask'\n\n" +
+                "Allowed actions: click, scroll, scroll_backward, input_text, back, ask\n\n" +
+                "Output format EXACTLY like this (ONLY JSON):\n" +
+                "{\"action\": \"click\", \"target_id\": 2, \"input_text\": \"\", \"reason\": \"to submit\"}\n\n" +
+                "Elements: " + screenJson + "\n" +
+                "Context: " + contextStr + "\n" +
+                "Command: " + userCommand;
+
+        try {
+            JSONObject requestBody = buildTextRequestWithJson(prompt);
+            String url = GEMINI_API_BASE + MODEL + ":generateContent?key=" + apiKey;
+            executeRequest(url, requestBody.toString(), callback);
+        } catch (JSONException e) {
+            AppLogger.e(TAG, "JSON build error", e);
+            callback.onError("Failed to build request");
+        }
+    }
+
     private JSONObject buildVisionRequest(String prompt, String base64Image,
                                           String mimeType) throws JSONException {
         JSONObject textPart = new JSONObject().put("text", prompt);

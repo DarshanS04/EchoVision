@@ -101,7 +101,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.VisionAssist"
-        android:usesCleartextTraffic="false"
+        android:usesCleartextTraffic="true"
         android:extractNativeLibs="true"
         tools:targetApi="31">
 
@@ -118,6 +118,18 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name=".volunteer.VolunteerModeActivity"
+            android:exported="false"
+            android:label="Volunteer Mode"
+            android:screenOrientation="portrait" />
+
+        <activity
+            android:name=".volunteer.VolunteerCallActivity"
+            android:exported="false"
+            android:label="Volunteer Call"
+            android:screenOrientation="portrait" />
 
         <activity
             android:name=".ui.activities.SettingsActivity"

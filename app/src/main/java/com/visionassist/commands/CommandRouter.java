@@ -16,8 +16,9 @@ import com.visionassist.emergency.EmergencyManager;
 import com.visionassist.navigation.NavigationAssistant;
 import com.visionassist.services.NotificationReaderService;
 import com.visionassist.ui.activities.CameraActivity;
-import com.visionassist.voice.tts.TTSManager;
 import com.visionassist.navigation.AdvanceAssistManager;
+import com.visionassist.voice.tts.TTSManager;
+import com.visionassist.volunteer.VolunteerCallActivity;
 
 /**
  * Central command router. Receives raw voice text, classifies it into a VoiceCommand
@@ -293,6 +294,16 @@ public class CommandRouter {
                 callback.onResult(msg);
                 break;
 
+            case CONNECT_VOLUNTEER: {
+                Intent intent = new Intent(context, VolunteerCallActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                context.startActivity(intent);
+                String vMsg = "Connecting to volunteer. Please wait.";
+                tts.speak(vMsg);
+                callback.onResult(vMsg);
+                break;
+            }
+
             case GEMINI_QUERY:
             default:
                 // Fall back to AI layer (Gemini online, or local offline)
@@ -472,6 +483,10 @@ public class CommandRouter {
 
         if (t.equals("start advance assist") || t.equals("start advanced assist") || t.equals("start advance assistance")) {
             return new VoiceCommand(text, VoiceCommand.CommandType.ADVANCE_ASSIST_START);
+        }
+
+        if (t.contains("connect to volunteer") || t.contains("call volunteer") || t.contains("volunteer help")) {
+            return new VoiceCommand(text, VoiceCommand.CommandType.CONNECT_VOLUNTEER);
         }
 
         return new VoiceCommand(text, VoiceCommand.CommandType.GEMINI_QUERY);

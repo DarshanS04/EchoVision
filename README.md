@@ -151,6 +151,18 @@ When triggered by voice, camera features run either continuously or automaticall
 
 ---
 
+### 🤝 Human Assistance (Volunteer Connection)
+Connect to a sighted volunteer via a real-time video/audio stream. This feature uses a modular Socket.IO implementation and does not require an external API key.
+
+| Voice Command | What Happens |
+|---|---|
+| `Connect to volunteer` / `Call volunteer` | Establishes a socket connection to a volunteer for video guidance. |
+| `Volunteer help` | Same — starts the camera and audio stream to the volunteer. |
+
+> **Volunteer Mode:** You can also enter "Volunteer Mode" by tapping the person icon in the footer menu to guide other users.
+
+---
+
 ### ⚙️ System Controls
 | Voice Command | What Happens |
 |---|---|
@@ -209,6 +221,7 @@ When triggered by voice, camera features run either continuously or automaticall
 3. **Enable Notification Access**: Settings → Apps → Special App Access → Notification Access → EchoVision.
 4. *(Optional)* Add a **Gemini API key** in Settings for AI-powered general questions.
 5. *(Optional)* Set an **emergency contact** in Settings for SOS.
+6. **Volunteer Server Setup**: If using "Connect to Volunteer", run the Node.js server on your laptop (see `server/` directory).
 
 ---
 
@@ -237,9 +250,15 @@ com.visionassist/
 │   └── NotificationReaderService.java  — Auto-read & on-demand notification reading
 ├── triggers/
 │   └── VolumeButtonTrigger.java  — Long-press & dual-button activation
-└── accessibility/
-    ├── VisionAccessibilityService.java  — Key event interception across all apps
-    └── AIScreenParser.java          — UI tree traversal for Gemini context
+├── accessibility/
+│   ├── VisionAccessibilityService.java  — Key event interception across all apps
+│   └── AIScreenParser.java          — UI tree traversal for Gemini context
+├── volunteer/
+│   ├── VolunteerCommunication.java  — Modular interface for streaming
+│   ├── SocketVolunteerCommunication.java — Socket.IO implementation
+│   ├── VolunteerCallActivity.java   — Blind user video capture & stream
+│   └── VolunteerModeActivity.java   — Volunteer screen for receiving video
+└── server/                          — Node.js Socket.IO routing server
 ```
 
 ---
@@ -252,5 +271,6 @@ com.visionassist/
 | Alarm, timer, calendar | ❌ None |
 | General AI questions (Gemini) | ✅ Optional |
 | Camera scene description (Gemini Vision) | ✅ Optional |
+| Human Volunteer Connection (Socket)    | ❌ None |
 
-The app is **fully functional without any API key**. Gemini only enhances general-knowledge Q&A and camera description.
+The app is **fully functional without any API key**. Gemini only enhances general-knowledge Q&A and camera description. Human volunteer assistance works via a local or hosted Node.js socket server.

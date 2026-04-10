@@ -49,6 +49,7 @@ public class VoiceCommand {
         GO_HOME,
         ADVANCE_ASSIST_START,
         ADVANCE_ASSIST_STOP,
+        CONNECT_VOLUNTEER,
         UNKNOWN
     }
 

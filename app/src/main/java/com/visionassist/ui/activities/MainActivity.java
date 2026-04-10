@@ -18,6 +18,7 @@ import com.visionassist.ui.components.VoiceButton;
 import com.visionassist.ui.fragments.AssistantFragment;
 import com.visionassist.voice.speech.VoiceCommandListener;
 import com.visionassist.voice.tts.TTSManager;
+import com.visionassist.volunteer.VolunteerModeActivity;
 
 /**
  * Main entry Activity for VisionAssist.
@@ -90,6 +91,13 @@ public class MainActivity extends AppCompatActivity
         if (cameraBtn != null) {
             cameraBtn.setOnClickListener(v ->
                     startActivity(new Intent(this, CameraActivity.class)));
+        }
+
+        // Volunteer button
+        View volunteerBtn = findViewById(R.id.volunteer_button);
+        if (volunteerBtn != null) {
+            volunteerBtn.setOnClickListener(v ->
+                    startActivity(new Intent(this, VolunteerModeActivity.class)));
         }
     }
 

@@ -119,18 +119,20 @@ Opens the device's default browser — no API key.
 ### 📱 Screen Reader
 | Voice Command | What Happens |
 |---|---|
-| `What is on my screen` | Reads the current screen content aloud |
+| `Describe screen` / `Read screen` | Reads the current screen content aloud |
 
 > **Requirement:** Requires the **EchoVision Accessibility Service** to be active.
 
 ---
 
 ### 📷 Camera Features
+When triggered by voice, camera features run either continuously or automatically without needing extra taps. When launched via the main menu's camera button, you maintain manual control.
+
 | Voice Command | What Happens |
 |---|---|
-| `What is in front of me` | Describes objects/scene using camera + AI |
-| `Read text` / `OCR` | Reads text in front of the camera |
-| `Scan barcode` / `Scan QR` | Scans and reads the barcode/QR value |
+| `Describe scene` / `Detect objects` | Opens the camera and **continuously** describes objects (every 5 seconds) until you exit. |
+| `Read text` / `OCR` | Opens the camera and **automatically extracts** text on screen. This runs once. |
+| `Scan QR code` / `Scan barcode` | Opens the camera and **continuously** scans for QR codes/barcodes in the background, only speaking when one is found. |
 
 ---
 
@@ -139,8 +141,8 @@ Opens the device's default browser — no API key.
 |---|---|
 | `Battery status` | Reads battery percentage aloud |
 | `Go to home` | Goes to the device's home screen |
-| `What time is it` | Reads current time |
-| `What is today's date` | Reads today's date |
+| `Tell me the time` | Reads current time |
+| `Today's date` | Reads today's date |
 | `Turn on flashlight` | Toggles torch on/off |
 | `Open WiFi` / `WiFi settings` | Opens WiFi control panel |
 | `Bluetooth settings` | Opens Bluetooth panel |

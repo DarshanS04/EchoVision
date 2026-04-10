@@ -61,8 +61,8 @@ public final class AppConstants {
     public static final String CMD_OPEN = "open";
     public static final String CMD_CALL = "call";
     public static final String CMD_READ = "read";
-    public static final String CMD_WHAT_SCREEN = "what is on my screen";
-    public static final String CMD_WHAT_FRONT = "what is in front";
+    public static final String CMD_WHAT_SCREEN = "describe screen";
+    public static final String CMD_WHAT_FRONT = "describe scene";
     public static final String CMD_NAVIGATE = "navigate";
     public static final String CMD_SOS = "sos";
     public static final String CMD_EMERGENCY = "emergency";

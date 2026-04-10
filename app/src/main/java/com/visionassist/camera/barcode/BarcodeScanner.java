@@ -35,12 +35,14 @@ public class BarcodeScanner {
     /**
      * Scan a Bitmap for barcodes/QR codes.
      */
-    public void scan(Bitmap bitmap, ScanCallback callback) {
+    public void scan(Bitmap bitmap, boolean isContinuous, ScanCallback callback) {
         InputImage image = InputImage.fromBitmap(bitmap, 0);
         scanner.process(image)
                 .addOnSuccessListener(barcodes -> {
                     if (barcodes.isEmpty()) {
-                        tts.speak("No barcode or QR code found in the image.");
+                        if (!isContinuous) {
+                            tts.speak("No barcode or QR code found in the image.");
+                        }
                         callback.onNoBarcode();
                         return;
                     }

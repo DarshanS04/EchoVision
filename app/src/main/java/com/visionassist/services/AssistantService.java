@@ -35,6 +35,7 @@ public class AssistantService extends Service {
     private VolumeButtonTrigger volumeButtonTrigger;
     private TTSManager tts;
     private Handler mainHandler;
+    private boolean wakeWordEnabled = false;
 
     public static boolean isRunning = false;
 
@@ -50,10 +51,21 @@ public class AssistantService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         AppLogger.i(TAG, "AssistantService started");
 
-        if (intent != null && AppConstants.ACTION_START_LISTENING.equals(intent.getAction())) {
-            startListening();
-        } else if (intent != null && AppConstants.ACTION_STOP_LISTENING.equals(intent.getAction())) {
-            stopListening();
+        if (intent != null) {
+            String action = intent.getAction();
+            if (AppConstants.ACTION_START_LISTENING.equals(action)) {
+                startCommandListening();
+            } else if (AppConstants.ACTION_STOP_LISTENING.equals(action)) {
+                stopListening();
+                if (wakeWordEnabled) startWakeWordListening();
+            } else if (AppConstants.ACTION_UPDATE_WAKEWORD.equals(action)) {
+                wakeWordEnabled = com.visionassist.data.storage.PreferencesManager.getInstance(this).isWakeWordEnabled();
+                if (wakeWordEnabled) {
+                    startWakeWordListening();
+                } else {
+                    stopListening();
+                }
+            }
         }
 
         try {
@@ -67,10 +79,27 @@ public class AssistantService extends Service {
 
     private void initComponents() {
         tts = TTSManager.getInstance(this);
+        wakeWordEnabled = com.visionassist.data.storage.PreferencesManager.getInstance(this).isWakeWordEnabled();
 
         voiceCommandListener = new VoiceCommandListener(this);
         speechRecognizerManager = new SpeechRecognizerManager(this);
         speechRecognizerManager.setCallback(voiceCommandListener);
+
+        voiceCommandListener.setModeSwitchCallback(new VoiceCommandListener.ModeSwitchCallback() {
+            @Override
+            public void onWakeWordDetected() {
+                AppLogger.i(TAG, "Wake word triggered command mode");
+                startCommandListening();
+            }
+
+            @Override
+            public void onCommandFinished() {
+                AppLogger.i(TAG, "Command finished, reverting to wake word if enabled");
+                if (wakeWordEnabled) {
+                    startWakeWordListening();
+                }
+            }
+        });
 
         // Init on main thread (SpeechRecognizer requires Looper)
         mainHandler.post(() -> speechRecognizerManager.init());
@@ -81,25 +110,46 @@ public class AssistantService extends Service {
             @Override
             public void onTriggerActivated() {
                 AppLogger.i(TAG, "Volume dual-press trigger — starting listening");
-                tts.speak("Listening.");
-                startListening();
+                startCommandListening();
             }
 
             @Override
             public void onLongPressActivated() {
                 AppLogger.i(TAG, "Volume long-press trigger — starting listening");
-                tts.speak("Listening.");
-                startListening();
+                startCommandListening();
             }
         });
+
+        if (wakeWordEnabled) {
+            startWakeWordListening();
+        }
     }
 
-    /**
-     * Start the speech recognizer.
-     */
-    public void startListening() {
-        if (speechRecognizerManager != null && !speechRecognizerManager.isListening()) {
-            mainHandler.post(() -> speechRecognizerManager.startListening());
+    public void startCommandListening() {
+        if (speechRecognizerManager != null) {
+            mainHandler.post(() -> {
+                speechRecognizerManager.cancel();
+                speechRecognizerManager.setContinuousMode(false);
+                voiceCommandListener.setWakeWordMode(false);
+                tts.speak("Listening.");
+                mainHandler.postDelayed(() -> {
+                    if (speechRecognizerManager != null) speechRecognizerManager.startListening();
+                }, 500);
+            });
+        }
+    }
+
+    public void startWakeWordListening() {
+        if (speechRecognizerManager != null) {
+            mainHandler.post(() -> {
+                AppLogger.d(TAG, "Starting wake word listening mode");
+                speechRecognizerManager.cancel();
+                speechRecognizerManager.setContinuousMode(true);
+                voiceCommandListener.setWakeWordMode(true);
+                mainHandler.postDelayed(() -> {
+                    if (speechRecognizerManager != null) speechRecognizerManager.startListening();
+                }, 300);
+            });
         }
     }
 

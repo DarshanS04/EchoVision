@@ -87,6 +87,19 @@
                 android:checked="true" />
         </LinearLayout>
 
+        <!-- Wake Word Detection -->
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:gravity="center_vertical"
+            android:layout_marginTop="16dp">
+            <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:text="Hey Vision Wake Word"
+                android:textColor="@color/text_primary" android:textSize="15sp" />
+            <Switch android:id="@+id/wake_word_switch"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:contentDescription="Toggle wake word"
+                android:checked="false" />
+        </LinearLayout>
+
         <!-- Test TTS -->
         <Button android:id="@+id/test_tts_button"
             android:layout_width="match_parent" android:layout_height="56dp"

@@ -31,6 +31,7 @@ public class SettingsActivity extends AppCompatActivity {
     private SeekBar ttsPitchBar;
     private Switch offlineModeSwitch;
     private Switch notificationSwitch;
+    private Switch wakeWordSwitch;
     private TextView ttsSpeedLabel;
     private TextView ttsPitchLabel;
 
@@ -60,6 +61,7 @@ public class SettingsActivity extends AppCompatActivity {
         ttsPitchBar = findViewById(R.id.tts_pitch_bar);
         offlineModeSwitch = findViewById(R.id.offline_mode_switch);
         notificationSwitch = findViewById(R.id.notification_switch);
+        wakeWordSwitch = findViewById(R.id.wake_word_switch);
         ttsSpeedLabel = findViewById(R.id.tts_speed_label);
         ttsPitchLabel = findViewById(R.id.tts_pitch_label);
     }
@@ -70,6 +72,7 @@ public class SettingsActivity extends AppCompatActivity {
         emergencyNameInput.setText(prefs.getEmergencyContactName());
         offlineModeSwitch.setChecked(prefs.isOfflineModeForced());
         notificationSwitch.setChecked(prefs.shouldReadNotifications());
+        wakeWordSwitch.setChecked(prefs.isWakeWordEnabled());
 
         // Speed: 0.5 - 2.0 mapped to 0-100
         int speedProgress = (int) ((prefs.getTtsSpeed() - 0.5f) / 1.5f * 100);
@@ -142,6 +145,11 @@ public class SettingsActivity extends AppCompatActivity {
         prefs.setEmergencyContactName(emergencyName.isEmpty() ? "Emergency Contact" : emergencyName);
         prefs.setOfflineMode(offlineModeSwitch.isChecked());
         prefs.setReadNotifications(notificationSwitch.isChecked());
+        prefs.setWakeWordEnabled(wakeWordSwitch.isChecked());
+
+        android.content.Intent intent = new android.content.Intent(this, com.visionassist.services.AssistantService.class);
+        intent.setAction(com.visionassist.core.constants.AppConstants.ACTION_UPDATE_WAKEWORD);
+        startService(intent);
 
         AppLogger.i(TAG, "Settings saved");
         Toast.makeText(this, "Settings saved", Toast.LENGTH_SHORT).show();

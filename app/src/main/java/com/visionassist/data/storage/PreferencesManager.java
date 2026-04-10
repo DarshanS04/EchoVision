@@ -91,6 +91,15 @@ public class PreferencesManager {
         prefs.edit().putBoolean(AppConstants.KEY_READ_NOTIFICATIONS, read).apply();
     }
 
+    // ---- Wake Word ----
+    public boolean isWakeWordEnabled() {
+        return prefs.getBoolean(AppConstants.KEY_WAKE_WORD_ENABLED, false);
+    }
+
+    public void setWakeWordEnabled(boolean enabled) {
+        prefs.edit().putBoolean(AppConstants.KEY_WAKE_WORD_ENABLED, enabled).apply();
+    }
+
     // ---- First launch ----
     public boolean isFirstLaunch() {
         return prefs.getBoolean(AppConstants.KEY_FIRST_LAUNCH, true);

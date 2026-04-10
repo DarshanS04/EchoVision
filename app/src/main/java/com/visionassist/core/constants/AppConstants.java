@@ -27,6 +27,7 @@ public final class AppConstants {
     public static final String KEY_OFFLINE_MODE = "offline_mode";
     public static final String KEY_READ_NOTIFICATIONS = "read_notifications";
     public static final String KEY_FIRST_LAUNCH = "first_launch";
+    public static final String KEY_WAKE_WORD_ENABLED = "wake_word_enabled";
 
     // TTS defaults
     public static final float DEFAULT_TTS_SPEED = 1.0f;
@@ -49,6 +50,7 @@ public final class AppConstants {
     public static final String ACTION_STOP_LISTENING = "com.visionassist.ACTION_STOP_LISTENING";
     public static final String ACTION_SPEAK = "com.visionassist.ACTION_SPEAK";
     public static final String ACTION_SOS = "com.visionassist.ACTION_SOS";
+    public static final String ACTION_UPDATE_WAKEWORD = "com.visionassist.ACTION_UPDATE_WAKEWORD";
 
     // Intent extras
     public static final String EXTRA_SPEECH_TEXT = "speech_text";

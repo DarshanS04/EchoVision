@@ -17,16 +17,20 @@ public class VoiceCommandListener implements SpeechRecognizerManager.SpeechCallb
     private final CommandRouter commandRouter;
     private final TTSManager ttsManager;
 
-    /** Optional callback for UI updates */
     public interface UIUpdateCallback {
         void onListeningStateChanged(boolean isListening);
-
         void onPartialTextReceived(String partialText);
-
         void onCommandProcessed(String commandText, String response);
     }
 
+    public interface ModeSwitchCallback {
+        void onWakeWordDetected();
+        void onCommandFinished();
+    }
+
     private UIUpdateCallback uiCallback;
+    private ModeSwitchCallback modeCallback;
+    private boolean isWakeWordMode = false;
 
     public VoiceCommandListener(Context context) {
         this.context = context.getApplicationContext();
@@ -38,11 +42,28 @@ public class VoiceCommandListener implements SpeechRecognizerManager.SpeechCallb
         this.uiCallback = callback;
     }
 
+    public void setModeSwitchCallback(ModeSwitchCallback callback) {
+        this.modeCallback = callback;
+    }
+
+    public void setWakeWordMode(boolean active) {
+        this.isWakeWordMode = active;
+        AppLogger.d(TAG, "Wake word mode switched to: " + active);
+    }
+
     @Override
     public void onPartialResult(String partialText) {
         AppLogger.v(TAG, "Partial: " + partialText);
         if (uiCallback != null)
             uiCallback.onPartialTextReceived(partialText);
+
+        if (isWakeWordMode && partialText != null) {
+            String cleaned = partialText.toLowerCase();
+            if (cleaned.contains("hey vision") || cleaned.contains("hey, vision") || cleaned.contains("a vision") || cleaned.contains("division")) {
+                AppLogger.i(TAG, "Wake word detected in partial result!");
+                if (modeCallback != null) modeCallback.onWakeWordDetected();
+            }
+        }
     }
 
     @Override
@@ -50,12 +71,22 @@ public class VoiceCommandListener implements SpeechRecognizerManager.SpeechCallb
         if (finalText == null || finalText.trim().isEmpty())
             return;
         String cleaned = finalText.trim().toLowerCase();
-        AppLogger.i(TAG, "Processing command: " + cleaned);
+        AppLogger.i(TAG, "Processing text: " + cleaned);
+
+        if (isWakeWordMode) {
+            if (cleaned.contains("hey vision") || cleaned.contains("hey, vision") || cleaned.contains("a vision") || cleaned.contains("division")) {
+                AppLogger.i(TAG, "Wake word detected!");
+                if (modeCallback != null) modeCallback.onWakeWordDetected();
+            }
+            return;
+        }
 
         // Route command — async, will call TTS internally
         commandRouter.route(cleaned, response -> {
             if (uiCallback != null)
                 uiCallback.onCommandProcessed(finalText, response);
+            if (modeCallback != null) 
+                modeCallback.onCommandFinished();
         });
     }
 

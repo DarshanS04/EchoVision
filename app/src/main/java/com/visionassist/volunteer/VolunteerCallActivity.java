@@ -31,6 +31,7 @@ public class VolunteerCallActivity extends AppCompatActivity implements Voluntee
     private TextView callStatus;
     private PreviewView previewView;
     private TTSManager tts;
+    private AudioStreamer audioStreamer;
     private ExecutorService analysisExecutor;
     private long lastFrameTime = 0;
 
@@ -45,6 +46,12 @@ public class VolunteerCallActivity extends AppCompatActivity implements Voluntee
 
         analysisExecutor = Executors.newSingleThreadExecutor();
         comm = SocketClientManager.getInstance().getCommunication();
+
+        audioStreamer = new AudioStreamer(data -> {
+            if (comm.isConnected()) {
+                comm.sendAudioChunk(data);
+            }
+        });
 
         findViewById(R.id.end_call_button).setOnClickListener(v -> finish());
 
@@ -131,6 +138,7 @@ public class VolunteerCallActivity extends AppCompatActivity implements Voluntee
         runOnUiThread(() -> {
             callStatus.setText("Connected to signaling server.\nStarting stream...");
             tts.speak("Connected to server.");
+            audioStreamer.startRecording();
         });
     }
 
@@ -139,6 +147,7 @@ public class VolunteerCallActivity extends AppCompatActivity implements Voluntee
         runOnUiThread(() -> {
             callStatus.setText("Server disconnected.");
             tts.speak("Server disconnected.");
+            audioStreamer.stopRecording();
         });
     }
 
@@ -165,7 +174,9 @@ public class VolunteerCallActivity extends AppCompatActivity implements Voluntee
 
     @Override
     public void onAudioChunkReceived(byte[] data) {
-        // TODO: Play incoming volunteer audio
+        if (audioStreamer != null) {
+            audioStreamer.playAudio(data);
+        }
     }
 
     @Override
@@ -180,6 +191,9 @@ public class VolunteerCallActivity extends AppCompatActivity implements Voluntee
     protected void onDestroy() {
         super.onDestroy();
         comm.disconnect();
+        if (audioStreamer != null) {
+            audioStreamer.release();
+        }
         analysisExecutor.shutdown();
     }
 }

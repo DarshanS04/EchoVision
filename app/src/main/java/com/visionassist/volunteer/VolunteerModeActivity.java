@@ -15,6 +15,7 @@ public class VolunteerModeActivity extends AppCompatActivity implements Voluntee
     private VolunteerCommunication comm;
     private TextView connectionStatus;
     private ImageView videoView;
+    private AudioStreamer audioStreamer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -27,6 +28,13 @@ public class VolunteerModeActivity extends AppCompatActivity implements Voluntee
         findViewById(R.id.back_button).setOnClickListener(v -> finish());
 
         comm = SocketClientManager.getInstance().getCommunication();
+        
+        audioStreamer = new AudioStreamer(data -> {
+            if (comm.isConnected()) {
+                comm.sendAudioChunk(data);
+            }
+        });
+
         comm.connect("volunteer", this);
     }
 
@@ -41,6 +49,7 @@ public class VolunteerModeActivity extends AppCompatActivity implements Voluntee
     public void onDisconnect() {
         runOnUiThread(() -> {
             connectionStatus.setText("Disconnected from server.");
+            audioStreamer.stopRecording();
         });
     }
 
@@ -48,6 +57,7 @@ public class VolunteerModeActivity extends AppCompatActivity implements Voluntee
     public void onPeerOnline() {
         runOnUiThread(() -> {
             connectionStatus.setText("Connected to blind user!");
+            audioStreamer.startRecording();
         });
     }
 
@@ -56,6 +66,7 @@ public class VolunteerModeActivity extends AppCompatActivity implements Voluntee
         runOnUiThread(() -> {
             connectionStatus.setText("Blind user went offline.");
             videoView.setImageBitmap(null);
+            audioStreamer.stopRecording();
         });
     }
 
@@ -71,7 +82,9 @@ public class VolunteerModeActivity extends AppCompatActivity implements Voluntee
 
     @Override
     public void onAudioChunkReceived(byte[] data) {
-        // TODO: Play incoming blind user audio
+        if (audioStreamer != null) {
+            audioStreamer.playAudio(data);
+        }
     }
 
     @Override
@@ -85,5 +98,8 @@ public class VolunteerModeActivity extends AppCompatActivity implements Voluntee
     protected void onDestroy() {
         super.onDestroy();
         comm.disconnect();
+        if (audioStreamer != null) {
+            audioStreamer.release();
+        }
     }
 }

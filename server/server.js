@@ -5,6 +5,11 @@ const { Server } = require('socket.io');
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
+    cors: {
+        origin: "*",
+        methods: ["GET", "POST"]
+    },
+    allowEIO3: true,
     maxHttpBufferSize: 1e7 // Increase to 10MB for video frames
 });
 

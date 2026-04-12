@@ -8,7 +8,7 @@ import java.net.URISyntaxException;
 
 public class SocketVolunteerCommunication implements VolunteerCommunication {
     private static final String TAG = "SocketVolComm";
-    private static final String SERVER_URL = "http://10.0.2.2:3000"; // Emulator host
+    private static final String SERVER_URL = "http://10.96.126.152:3000"; // Local machine IP for physical device
 
     private Socket mSocket;
     private CommunicationCallback mCallback;
@@ -70,7 +70,12 @@ public class SocketVolunteerCommunication implements VolunteerCommunication {
         });
 
         mSocket.on(Socket.EVENT_CONNECT_ERROR, (args) -> {
-            if (mCallback != null) mCallback.onError("Socket connection error");
+            String errorMessage = "Socket connection error";
+            if (args.length > 0 && args[0] != null) {
+                errorMessage += ": " + args[0].toString();
+                Log.e(TAG, "Connection Error: " + args[0].toString());
+            }
+            if (mCallback != null) mCallback.onError(errorMessage);
         });
 
         mSocket.connect();

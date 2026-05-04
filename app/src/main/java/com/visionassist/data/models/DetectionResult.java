@@ -23,7 +23,8 @@ public class DetectionResult {
         // Determine position in frame
         String position = getPositionDescription();
         int percent = (int) (confidence * 100);
-        return String.format("I can see a %s %s with %d%% confidence.", label, position, percent);
+        // return String.format("I can see a %s %s with %d%% confidence.", label, position, percent);
+        return String.format("I can see a object %s with %d%% confidence.", position, percent);
     }
 
     private String getPositionDescription() {

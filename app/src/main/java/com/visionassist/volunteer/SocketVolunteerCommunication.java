@@ -8,7 +8,7 @@ import java.net.URISyntaxException;
 
 public class SocketVolunteerCommunication implements VolunteerCommunication {
     private static final String TAG = "SocketVolComm";
-    private static final String SERVER_URL = "http://10.96.126.152:3000"; // Local machine IP for physical device
+    private static final String SERVER_URL = "http://10.85.73.152:3000"; // Local machine IP for physical device
 
     private Socket mSocket;
     private CommunicationCallback mCallback;

@@ -5,10 +5,14 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.ContactsContract;
+import android.telephony.SmsManager;
 import com.visionassist.commands.CommandRouter;
 import com.visionassist.core.logger.AppLogger;
 import com.visionassist.core.utils.PermissionUtils;
 import com.visionassist.voice.tts.TTSManager;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Handles communication commands: SMS and WhatsApp messaging.
@@ -20,6 +24,23 @@ public class CommunicationCommands {
     private final Context context;
     private final TTSManager tts;
 
+    private List<ContactMatch> pendingSmsContacts;
+    private String pendingSmsBody;
+
+    private static class ContactMatch {
+        String name;
+        String number;
+
+        ContactMatch(String name, String number) {
+            this.name = name;
+            this.number = number;
+        }
+    }
+
+    public boolean hasPendingSmsContacts() {
+        return pendingSmsContacts != null && !pendingSmsContacts.isEmpty();
+    }
+
     private static final String PKG_WHATSAPP = "com.whatsapp";
 
     public CommunicationCommands(Context context) {
@@ -29,8 +50,65 @@ public class CommunicationCommands {
 
     // ─── SMS ────────────────────────────────────────────────────────────────
 
+    public void selectSmsContact(String commandText, CommandRouter.CommandCallback callback) {
+        if (!hasPendingSmsContacts()) {
+            tts.speak("No contact selection pending.");
+            callback.onResult("No contact selection pending.");
+            return;
+        }
+
+        int choice = parseChoice(commandText);
+
+        if (choice < 1 || choice > pendingSmsContacts.size()) {
+            tts.speak("Invalid option. Please choose between 1 and " + pendingSmsContacts.size());
+            return;
+        }
+
+        ContactMatch selected = pendingSmsContacts.get(choice - 1);
+        String phoneNumber = selected.number;
+        String contactDisplay = selected.name;
+
+        if (PermissionUtils.hasSmsPermission(context)) {
+            try {
+                SmsManager smsManager = SmsManager.getDefault();
+                smsManager.sendTextMessage(phoneNumber, null, pendingSmsBody.isEmpty() ? " " : pendingSmsBody, null, null);
+                String msg = "Message sent to " + contactDisplay;
+                tts.speak(msg);
+                callback.onResult(msg);
+            } catch (Exception e) {
+                AppLogger.e(TAG, "Failed to send SMS directly", e);
+                String msg = "Sorry, I could not send the message.";
+                tts.speak(msg);
+                callback.onResult(msg);
+            }
+        } else {
+            String msg = "I don't have permission to send messages directly.";
+            tts.speak(msg);
+            callback.onResult(msg);
+        }
+
+        pendingSmsContacts = null;
+        pendingSmsBody = null;
+    }
+
+    private int parseChoice(String text) {
+        String t = text.toLowerCase();
+        if (t.contains("one") || t.contains("1st") || t.contains("first")) return 1;
+        if (t.contains("two") || t.contains("2nd") || t.contains("second")) return 2;
+        if (t.contains("three") || t.contains("3rd") || t.contains("third")) return 3;
+        if (t.contains("four") || t.contains("4th") || t.contains("fourth")) return 4;
+        if (t.contains("five") || t.contains("5th") || t.contains("fifth")) return 5;
+
+        for (char c : t.toCharArray()) {
+            if (Character.isDigit(c)) {
+                return Character.getNumericValue(c);
+            }
+        }
+        return -1;
+    }
+
     /**
-     * Opens the default SMS app pre-filled with the contact and message body.
+     * Opens the default SMS app pre-filled with the contact and message body, or sends directly if permission granted.
      * Voice input example: "Send SMS to John saying I'm on my way"
      */
     public void sendSms(String rawText, CommandRouter.CommandCallback callback) {
@@ -44,32 +122,66 @@ public class CommunicationCommands {
             return;
         }
 
-        String phoneNumber = lookupContactNumber(contactName);
+        List<ContactMatch> matches = lookupContacts(contactName);
 
-        String uriStr = (phoneNumber != null)
-                ? "smsto:" + phoneNumber
-                : "smsto:";
+        if (matches.isEmpty()) {
+            String msg = "Sorry, I couldn't find " + contactName + " in your contacts.";
+            tts.speak(msg);
+            callback.onResult(msg);
+            return;
+        }
 
-        Intent intent = new Intent(Intent.ACTION_SENDTO, Uri.parse(uriStr));
-        intent.putExtra("sms_body", body.isEmpty() ? "" : body);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        if (matches.size() > 1) {
+            pendingSmsContacts = matches;
+            pendingSmsBody = body;
 
-        try {
-            context.startActivity(intent);
-            String msg;
-            if (phoneNumber != null) {
-                msg = "Opening messages to send an S M S to " + contactName;
-            } else {
-                msg = "Opening S M S app. I couldn't find " + contactName
-                        + " in your contacts, please type their number.";
+            StringBuilder msg = new StringBuilder();
+            msg.append("I found ").append(matches.size())
+               .append(" contacts matching ").append(contactName).append(". ");
+
+            for (int i = 0; i < matches.size(); i++) {
+                msg.append("Option ").append(i + 1).append(": ")
+                   .append(matches.get(i).name).append(". ");
             }
-            tts.speak(msg);
-            callback.onResult(msg);
-        } catch (Exception e) {
-            AppLogger.e(TAG, "SMS intent failed", e);
-            String msg = "Sorry, I could not open the messages app.";
-            tts.speak(msg);
-            callback.onResult(msg);
+
+            tts.speak(msg.toString());
+            callback.onResult(msg.toString());
+            return;
+        }
+
+        ContactMatch selected = matches.get(0);
+        String phoneNumber = selected.number;
+
+        if (PermissionUtils.hasSmsPermission(context)) {
+            try {
+                SmsManager smsManager = SmsManager.getDefault();
+                smsManager.sendTextMessage(phoneNumber, null, body.isEmpty() ? " " : body, null, null);
+                String msg = "Message sent to " + selected.name;
+                tts.speak(msg);
+                callback.onResult(msg);
+            } catch (Exception e) {
+                AppLogger.e(TAG, "Failed to send SMS directly", e);
+                String msg = "Sorry, I could not send the message.";
+                tts.speak(msg);
+                callback.onResult(msg);
+            }
+        } else {
+            String uriStr = "smsto:" + phoneNumber;
+            Intent intent = new Intent(Intent.ACTION_SENDTO, Uri.parse(uriStr));
+            intent.putExtra("sms_body", body.isEmpty() ? "" : body);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+            try {
+                context.startActivity(intent);
+                String msg = "Opening messages to send an S M S to " + selected.name;
+                tts.speak(msg);
+                callback.onResult(msg);
+            } catch (Exception e) {
+                AppLogger.e(TAG, "SMS intent failed", e);
+                String msg = "Sorry, I could not open the messages app.";
+                tts.speak(msg);
+                callback.onResult(msg);
+            }
         }
     }
 
@@ -90,7 +202,8 @@ public class CommunicationCommands {
             return;
         }
 
-        String phoneNumber = lookupContactNumber(contactName);
+        List<ContactMatch> matches = lookupContacts(contactName);
+        String phoneNumber = matches.isEmpty() ? null : matches.get(0).number;
 
         try {
             Intent intent;
@@ -142,12 +255,13 @@ public class CommunicationCommands {
 
     // ─── Helpers ────────────────────────────────────────────────────────────
 
-    /** Looks up the first phone number matching a contact name */
-    private String lookupContactNumber(String name) {
-        if (!PermissionUtils.hasContactsPermission(context)) return null;
+    private List<ContactMatch> lookupContacts(String name) {
+        List<ContactMatch> results = new ArrayList<>();
+        if (!PermissionUtils.hasContactsPermission(context)) return results;
 
         Uri uri = ContactsContract.CommonDataKinds.Phone.CONTENT_URI;
         String[] projection = {
+                ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME,
                 ContactsContract.CommonDataKinds.Phone.NUMBER
         };
         String selection = ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME + " LIKE ?";
@@ -155,14 +269,17 @@ public class CommunicationCommands {
 
         try (Cursor cursor = context.getContentResolver()
                 .query(uri, projection, selection, selectionArgs, null)) {
-            if (cursor != null && cursor.moveToFirst()) {
-                int idx = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER);
-                return (idx >= 0) ? cursor.getString(idx) : null;
+            if (cursor != null) {
+                int nameIdx = cursor.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME);
+                int numIdx = cursor.getColumnIndexOrThrow(ContactsContract.CommonDataKinds.Phone.NUMBER);
+                while (cursor.moveToNext()) {
+                    results.add(new ContactMatch(cursor.getString(nameIdx), cursor.getString(numIdx)));
+                }
             }
         } catch (Exception e) {
             AppLogger.e(TAG, "Contact lookup error", e);
         }
-        return null;
+        return results;
     }
 
     /**

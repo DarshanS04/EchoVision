@@ -40,12 +40,13 @@ Uses YouTube and Spotify app deep-links. Falls back to browser if the app is not
 ---
 
 ### 💬 SMS & WhatsApp
-Contacts are resolved from the phone's contact book. No typing needed.
+Contacts are resolved from the phone's contact book. No typing needed. SMS messages are sent directly in the background.
 
 | Voice Command | What Happens |
 |---|---|
-| `Send SMS to John saying I'm on my way` | Opens SMS app with name and message pre-filled |
-| `Text Mom Hello` | Same — goes to the first match in contacts |
+| `Send SMS to John saying I'm on my way` | Sends the SMS directly to John |
+| `Send SMS to John` *(multiple matches)* | Lists all matching contacts and asks to choose |
+| `Option 1` | Sends the SMS to the selected contact match |
 | `WhatsApp John let's meet at 5` | Opens WhatsApp chat with that contact |
 | `WhatsApp Mom` | Opens WhatsApp chat (no message body) |
 

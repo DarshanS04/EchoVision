@@ -176,6 +176,10 @@ public class CommandRouter {
                 phoneCommands.selectContact(rawText, callback);
                 break;
 
+            case SELECT_SMS_CONTACT:
+                communicationCommands.selectSmsContact(rawText, callback);
+                break;
+
             case BATTERY_STATUS:
                 systemCommands.readBatteryStatus(callback);
                 break;
@@ -327,6 +331,16 @@ public class CommandRouter {
                 t.matches(".*\\bfive\\b.*") || t.contains("1") || t.contains("2") ||
                 t.contains("3") || t.contains("4") || t.contains("5")) {
                 return new VoiceCommand(text, VoiceCommand.CommandType.SELECT_CONTACT);
+            }
+        }
+
+        if (communicationCommands.hasPendingSmsContacts()) {
+            if (t.contains("option") || t.contains("number") || t.contains("choice") ||
+                t.matches(".*\\bone\\b.*") || t.matches(".*\\btwo\\b.*") ||
+                t.matches(".*\\bthree\\b.*") || t.matches(".*\\bfour\\b.*") ||
+                t.matches(".*\\bfive\\b.*") || t.contains("1") || t.contains("2") ||
+                t.contains("3") || t.contains("4") || t.contains("5")) {
+                return new VoiceCommand(text, VoiceCommand.CommandType.SELECT_SMS_CONTACT);
             }
         }
 

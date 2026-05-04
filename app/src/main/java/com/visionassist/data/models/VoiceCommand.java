@@ -24,6 +24,7 @@ public class VoiceCommand {
         HELP,
         STOP,
         SELECT_CONTACT,
+        SELECT_SMS_CONTACT,
         TOGGLE_WIFI,
         TOGGLE_BLUETOOTH,
         TOGGLE_DATA,

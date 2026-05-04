@@ -8,6 +8,9 @@ import com.visionassist.accessibility.VisionAccessibilityService;
 import com.visionassist.ai.gemini.GeminiClient;
 import com.visionassist.core.logger.AppLogger;
 import org.json.JSONObject;
+import java.util.ArrayList;
+import java.util.List;
+import com.visionassist.data.local.chat.ChatMessage;
 
 /**
  * Orchestrates the Advance Assist continuous loop.
@@ -18,6 +21,7 @@ public class AdvanceAssistManager {
     
     private final GeminiClient geminiClient;
     private boolean isActive = false;
+    private final List<ChatMessage> history = new ArrayList<>();
 
     // Cache the last parsed screen to clean up properly
     private SparseArray<AccessibilityNodeInfo> lastNodeMap;
@@ -37,11 +41,13 @@ public class AdvanceAssistManager {
 
     public void startNavigation() {
         isActive = true;
+        history.clear();
         AppLogger.i(TAG, "Advance Assist started.");
     }
 
     public void stopNavigation() {
         isActive = false;
+        history.clear();
         cleanupLastScreen();
         AppLogger.i(TAG, "Advance Assist stopped.");
     }
@@ -72,7 +78,7 @@ public class AdvanceAssistManager {
         String screenContext = screenResult.summaryStr;
 
         // 2. Call Gemini
-        geminiClient.sendAppControlQuery(command, screenResult.jsonRepresentation, screenContext, new GeminiClient.GeminiCallback() {
+        geminiClient.sendAppControlQuery(command, screenResult.jsonRepresentation, screenContext, history, new GeminiClient.GeminiCallback() {
             @Override
             public void onResponse(String jsonText) {
                 try {
@@ -109,6 +115,12 @@ public class AdvanceAssistManager {
                     }
 
                     // 4. Summarize Next steps
+                    if (executed || "ask".equalsIgnoreCase(action)) {
+                        long now = System.currentTimeMillis();
+                        history.add(new ChatMessage("user", command, now, "advance"));
+                        history.add(new ChatMessage("model", cleanJson, now + 1, "advance"));
+                    }
+
                     if (executed) {
                         if (reason.isEmpty()) {
                             callback.onSuccess("Done.");

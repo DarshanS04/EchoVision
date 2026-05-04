@@ -417,6 +417,15 @@ public class CommandRouter {
             return new VoiceCommand(text, VoiceCommand.CommandType.WEB_SEARCH);
         }
 
+        // ── Advance Assist ────────────────────────────────────────────────
+        if (t.equals("exit advance mode") || t.equals("stop advance mode") || t.equals("exit advance assist") || t.equals("stop advance assist") || t.equals("stop advanced assist") || t.equals("exit assist")) {
+            return new VoiceCommand(text, VoiceCommand.CommandType.ADVANCE_ASSIST_STOP);
+        }
+
+        if (t.equals("advance mode") || t.equals("start advance mode") || t.equals("start advance assist") || t.equals("start advanced assist") || t.equals("start advance assistance")) {
+            return new VoiceCommand(text, VoiceCommand.CommandType.ADVANCE_ASSIST_START);
+        }
+
         // ── App / Phone / Core ────────────────────────────────────────────
         if (t.contains(AppConstants.CMD_OPEN) || t.contains("launch") || t.startsWith("start ")) {
             return new VoiceCommand(text, VoiceCommand.CommandType.OPEN_APP);
@@ -489,14 +498,6 @@ public class CommandRouter {
         }
         if (t.contains(AppConstants.CMD_LOCATION) || t.contains("gps")) {
             return new VoiceCommand(text, VoiceCommand.CommandType.TOGGLE_LOCATION);
-        }
-
-        if (t.equals("exit advance assist") || t.equals("stop advance assist") || t.equals("stop advanced assist") || t.equals("exit assist")) {
-            return new VoiceCommand(text, VoiceCommand.CommandType.ADVANCE_ASSIST_STOP);
-        }
-
-        if (t.equals("start advance assist") || t.equals("start advanced assist") || t.equals("start advance assistance")) {
-            return new VoiceCommand(text, VoiceCommand.CommandType.ADVANCE_ASSIST_START);
         }
 
         if (t.contains("connect to volunteer") || t.contains("call volunteer") || t.contains("volunteer help")) {

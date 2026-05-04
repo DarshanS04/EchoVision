@@ -126,16 +126,28 @@ Opens the device's default browser — no API key.
 
 ---
 
+### 🧠 Conversational AI
+The AI assistant maintains chat history context, allowing for follow-up questions and natural conversations.
+
+| Voice Command | What Happens |
+|---|---|
+| `Who is the president of France?` | AI answers the question. |
+| `How old is he?` | AI remembers the context (the president) and answers. |
+
+> **Requirement:** Requires a **Gemini API key**. Chat history is stored locally and securely on the device using a Room database.
+
+---
+
 ### 🤖 Advance Assist
 The Advance Assist feature allows you to interact with *any* app dynamically using your voice. The system reads the screen, maps actionable items, passes the context to Gemini, and executes your intent seamlessly.
 
 | Voice Command | What Happens |
 |---|---|
-| `Start advance assist` | Enters a continuous loop mode waiting for your instruction on the current screen. |
+| `Advance mode` | Enters a continuous loop mode waiting for your instruction on the current screen. |
 | `Click on the search button` | Finds the relevant button on screen and clicks it automatically. |
 | `Type shoes in the search field` | Focuses the desired text input and types "shoes". |
 | `Scroll down` | Scrolls the current page forward to reveal more content. |
-| `Exit advance assist` | Stops the continuous app control mode. |
+| `Exit advance mode` | Stops the continuous app control mode. |
 
 > **Requirement:** Requires the **EchoVision Accessibility Service** to be active and a **Gemini API key** for intelligent navigation.
 

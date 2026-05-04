@@ -15,7 +15,9 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
+import com.visionassist.data.local.chat.ChatMessage;
 
 /**
  * HTTP client for Google Gemini API.
@@ -25,7 +27,7 @@ public class GeminiClient {
 
     private static final String TAG = "GeminiClient";
     private static final String GEMINI_API_BASE =
-            "https://generativelanguage.googleapis.com/v1/models/";
+            "https://generativelanguage.googleapis.com/v1beta/models/";
     private static final String MODEL = "gemini-2.5-flash";
     private static final MediaType JSON_TYPE = MediaType.parse("application/json; charset=utf-8");
 
@@ -51,6 +53,13 @@ public class GeminiClient {
      * Send a text-only query to Gemini.
      */
     public void sendTextQuery(String prompt, GeminiCallback callback) {
+        sendTextQuery(prompt, null, callback);
+    }
+
+    /**
+     * Send a text-only query to Gemini with history.
+     */
+    public void sendTextQuery(String prompt, List<ChatMessage> history, GeminiCallback callback) {
         if (!repository.shouldUseGemini()) {
             callback.onError("Offline mode is enabled.");
             return;
@@ -62,7 +71,7 @@ public class GeminiClient {
         }
 
         try {
-            JSONObject requestBody = buildTextRequest(prompt);
+            JSONObject requestBody = buildTextRequest(prompt, history);
             String url = GEMINI_API_BASE + MODEL + ":generateContent?key=" + apiKey;
             executeRequest(url, requestBody.toString(), callback);
         } catch (JSONException e) {
@@ -155,11 +164,25 @@ public class GeminiClient {
         return parts.getJSONObject(0).getString("text");
     }
 
-    private JSONObject buildTextRequest(String prompt) throws JSONException {
-        JSONObject part = new JSONObject().put("text", prompt);
-        JSONArray parts = new JSONArray().put(part);
-        JSONObject content = new JSONObject().put("parts", parts);
-        JSONArray contents = new JSONArray().put(content);
+    private JSONObject buildTextRequest(String prompt, List<ChatMessage> history) throws JSONException {
+        JSONArray contents = new JSONArray();
+
+        if (history != null) {
+            for (ChatMessage msg : history) {
+                JSONObject part = new JSONObject().put("text", msg.getContent());
+                JSONObject content = new JSONObject()
+                        .put("role", msg.getRole())
+                        .put("parts", new JSONArray().put(part));
+                contents.put(content);
+            }
+        }
+
+        JSONObject currentPart = new JSONObject().put("text", prompt);
+        JSONObject currentContent = new JSONObject()
+                .put("role", "user")
+                .put("parts", new JSONArray().put(currentPart));
+        contents.put(currentContent);
+
         return new JSONObject()
                 .put("contents", contents)
                 .put("generationConfig", new JSONObject()
@@ -167,11 +190,25 @@ public class GeminiClient {
                         .put("maxOutputTokens", 512));
     }
 
-    private JSONObject buildTextRequestWithJson(String prompt) throws JSONException {
-        JSONObject part = new JSONObject().put("text", prompt);
-        JSONArray parts = new JSONArray().put(part);
-        JSONObject content = new JSONObject().put("parts", parts);
-        JSONArray contents = new JSONArray().put(content);
+    private JSONObject buildTextRequestWithJson(String prompt, List<ChatMessage> history) throws JSONException {
+        JSONArray contents = new JSONArray();
+
+        if (history != null) {
+            for (ChatMessage msg : history) {
+                JSONObject part = new JSONObject().put("text", msg.getContent());
+                JSONObject content = new JSONObject()
+                        .put("role", msg.getRole())
+                        .put("parts", new JSONArray().put(part));
+                contents.put(content);
+            }
+        }
+
+        JSONObject currentPart = new JSONObject().put("text", prompt);
+        JSONObject currentContent = new JSONObject()
+                .put("role", "user")
+                .put("parts", new JSONArray().put(currentPart));
+        contents.put(currentContent);
+
         return new JSONObject()
                 .put("contents", contents)
                 .put("generationConfig", new JSONObject()
@@ -184,6 +221,10 @@ public class GeminiClient {
      * Send a query to Gemini for App Navigation (forcing JSON output).
      */
     public void sendAppControlQuery(String userCommand, String screenJson, String contextStr, GeminiCallback callback) {
+        sendAppControlQuery(userCommand, screenJson, contextStr, null, callback);
+    }
+
+    public void sendAppControlQuery(String userCommand, String screenJson, String contextStr, List<ChatMessage> history, GeminiCallback callback) {
         if (!repository.shouldUseGemini()) {
             callback.onError("Offline mode is enabled.");
             return;
@@ -215,7 +256,7 @@ public class GeminiClient {
                 "Command: " + userCommand;
 
         try {
-            JSONObject requestBody = buildTextRequestWithJson(prompt);
+            JSONObject requestBody = buildTextRequestWithJson(prompt, history);
             String url = GEMINI_API_BASE + MODEL + ":generateContent?key=" + apiKey;
             executeRequest(url, requestBody.toString(), callback);
         } catch (JSONException e) {

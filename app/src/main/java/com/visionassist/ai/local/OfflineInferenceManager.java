@@ -6,7 +6,13 @@ import com.visionassist.ai.gemini.GeminiPromptBuilder;
 import com.visionassist.commands.CommandRouter;
 import com.visionassist.core.logger.AppLogger;
 import com.visionassist.data.repository.AppRepository;
+import com.visionassist.data.local.chat.ChatDatabase;
+import com.visionassist.data.local.chat.ChatDao;
+import com.visionassist.data.local.chat.ChatMessage;
 import com.visionassist.voice.tts.TTSManager;
+import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ExecutorService;
 
 /**
  * Decides whether to use online Gemini or offline LocalAIProcessor
@@ -20,12 +26,16 @@ public class OfflineInferenceManager {
     private final AppRepository repository;
     private final LocalAIProcessor localProcessor;
     private final TTSManager tts;
+    private final ChatDao chatDao;
+    private final ExecutorService executor;
 
     public OfflineInferenceManager(Context context) {
         this.context = context.getApplicationContext();
         this.repository = AppRepository.getInstance(context);
         this.localProcessor = new LocalAIProcessor(context);
         this.tts = TTSManager.getInstance(context);
+        this.chatDao = ChatDatabase.getInstance(context).chatDao();
+        this.executor = Executors.newSingleThreadExecutor();
     }
 
     /**
@@ -50,24 +60,40 @@ public class OfflineInferenceManager {
             GeminiPromptBuilder builder = new GeminiPromptBuilder(context);
             String prompt = builder.buildConversationalPrompt(query);
 
-            gemini.sendTextQuery(prompt, new GeminiClient.GeminiCallback() {
-                @Override
-                public void onResponse(String text) {
-                    tts.speak(text);
-                    callback.onResult(text);
-                }
+            executor.execute(() -> {
+                try {
+                    // Fetch last 10 messages to maintain context
+                    List<ChatMessage> history = chatDao.getRecentHistory("general", 10);
+                    
+                    gemini.sendTextQuery(prompt, history, new GeminiClient.GeminiCallback() {
+                        @Override
+                        public void onResponse(String text) {
+                            tts.speak(text);
+                            callback.onResult(text);
+                            
+                            // Save to history
+                            executor.execute(() -> {
+                                long now = System.currentTimeMillis();
+                                chatDao.insertMessage(new ChatMessage("user", prompt, now, "general"));
+                                chatDao.insertMessage(new ChatMessage("model", text, now + 1, "general"));
+                            });
+                        }
 
-                @Override
-                public void onError(String error) {
-                    AppLogger.e(TAG, "Gemini error: " + error);
-                    String speakableError;
-                    if (error != null && error.contains("Offline mode")) {
-                        speakableError = "I'm currently in Force Offline Mode as configured in your settings.";
-                    } else {
-                        speakableError = "I encountered an error connecting online: " + error;
-                    }
-                    tts.speak(speakableError);
-                    callback.onResult(speakableError);
+                        @Override
+                        public void onError(String error) {
+                            AppLogger.e(TAG, "Gemini error: " + error);
+                            String speakableError;
+                            if (error != null && error.contains("Offline mode")) {
+                                speakableError = "I'm currently in Force Offline Mode as configured in your settings.";
+                            } else {
+                                speakableError = "I encountered an error connecting online: " + error;
+                            }
+                            tts.speak(speakableError);
+                            callback.onResult(speakableError);
+                        }
+                    });
+                } catch (Exception e) {
+                    AppLogger.e(TAG, "Failed to execute Gemini chat query", e);
                 }
             });
         } else {

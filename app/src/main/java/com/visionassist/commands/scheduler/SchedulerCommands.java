@@ -7,7 +7,12 @@ import android.provider.CalendarContract;
 import com.visionassist.commands.CommandRouter;
 import com.visionassist.core.logger.AppLogger;
 import com.visionassist.voice.tts.TTSManager;
+import android.content.ContentValues;
+import android.content.pm.PackageManager;
+import androidx.core.content.ContextCompat;
+import android.Manifest;
 import java.util.Calendar;
+import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -21,6 +26,12 @@ public class SchedulerCommands {
     private static final String TAG = "SchedulerCommands";
     private final Context context;
     private final TTSManager tts;
+
+    private enum ReminderState { NONE, AWAITING_REPETITION, AWAITING_DATE, AWAITING_TIME }
+    private ReminderState currentReminderState = ReminderState.NONE;
+    private String pendingTitle = "";
+    private boolean isEveryday = false;
+    private Calendar pendingDate = null;
 
     public SchedulerCommands(Context context) {
         this.context = context.getApplicationContext();
@@ -60,7 +71,8 @@ public class SchedulerCommands {
         Intent intent = new Intent(AlarmClock.ACTION_SET_ALARM);
         intent.putExtra(AlarmClock.EXTRA_HOUR, time[0]);
         intent.putExtra(AlarmClock.EXTRA_MINUTES, time[1]);
-        intent.putExtra(AlarmClock.EXTRA_SKIP_UI, false); // show confirmation
+        intent.putExtra(AlarmClock.EXTRA_SKIP_UI, true); // create automatically without opening UI
+        intent.putExtra(AlarmClock.EXTRA_VIBRATE, true); // ensure it vibrates
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
         try {
@@ -110,7 +122,7 @@ public class SchedulerCommands {
 
         Intent intent = new Intent(AlarmClock.ACTION_SET_TIMER);
         intent.putExtra(AlarmClock.EXTRA_LENGTH, totalSeconds);
-        intent.putExtra(AlarmClock.EXTRA_SKIP_UI, false);
+        intent.putExtra(AlarmClock.EXTRA_SKIP_UI, true); // create automatically without opening UI
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
         try {
@@ -126,57 +138,284 @@ public class SchedulerCommands {
         }
     }
 
-    // ─── Calendar ───────────────────────────────────────────────────────────
+    // ─── Calendar / Reminders ───────────────────────────────────────────────
+
+    public boolean hasPendingReminderState() {
+        return currentReminderState != ReminderState.NONE;
+    }
+
+    public void cancelPendingReminder() {
+        currentReminderState = ReminderState.NONE;
+        pendingTitle = "";
+        pendingDate = null;
+    }
 
     /**
-     * Creates a new calendar event or opens the calendar.
-     * Voice examples:
-     *   "Create calendar event for meeting tomorrow"
-     *   "Add reminder for doctor appointment"
-     *   "Open my calendar"
+     * Interactive flow for creating a reminder/calendar event.
      */
     public void createCalendarEvent(String rawText, CommandRouter.CommandCallback callback) {
-        String title = extractEventTitle(rawText);
+        if (currentReminderState != ReminderState.NONE) {
+            handlePendingReminder(rawText, callback);
+            return;
+        }
 
+        String title = extractEventTitle(rawText);
+        if (title.isEmpty()) {
+            title = "Reminder";
+        }
+        pendingTitle = title;
+        currentReminderState = ReminderState.AWAITING_REPETITION;
+        String msg = "Would you like this reminder everyday or just once?";
+        tts.speak(msg);
+        callback.onResult(msg);
+    }
+
+    private void handlePendingReminder(String rawText, CommandRouter.CommandCallback callback) {
+        String t = rawText.toLowerCase().trim();
+
+        switch (currentReminderState) {
+            case AWAITING_REPETITION:
+                if (t.contains("everyday") || t.contains("every day") || t.contains("daily")) {
+                    isEveryday = true;
+                    currentReminderState = ReminderState.AWAITING_TIME;
+                    tts.speak("What time should I remind you?");
+                    callback.onResult("What time should I remind you?");
+                } else if (t.contains("once") || t.contains("just once") || t.contains("one time")) {
+                    isEveryday = false;
+                    currentReminderState = ReminderState.AWAITING_DATE;
+                    tts.speak("What date should I remind you?");
+                    callback.onResult("What date should I remind you?");
+                } else {
+                    tts.speak("Please say everyday or just once.");
+                    callback.onResult("Please say everyday or just once.");
+                }
+                break;
+
+            case AWAITING_DATE:
+                pendingDate = parseDate(t);
+                if (pendingDate != null) {
+                    currentReminderState = ReminderState.AWAITING_TIME;
+                    tts.speak("What time should I remind you?");
+                    callback.onResult("What time should I remind you?");
+                } else {
+                    tts.speak("I didn't catch the date. Please say something like today, tomorrow, or next Monday.");
+                    callback.onResult("I didn't catch the date.");
+                }
+                break;
+
+            case AWAITING_TIME:
+                int[] time = parseTime(t);
+                if (time != null) {
+                    if (isEveryday) {
+                        createEverydayReminder(time, callback);
+                    } else {
+                        createOnceReminder(time, callback);
+                    }
+                    cancelPendingReminder();
+                } else {
+                    tts.speak("I didn't catch the time. Please say a time like 10 AM or 5 30 PM.");
+                    callback.onResult("I didn't catch the time.");
+                }
+                break;
+
+            default:
+                cancelPendingReminder();
+                break;
+        }
+    }
+
+    private void createOnceReminder(int[] time, CommandRouter.CommandCallback callback) {
+        pendingDate.set(Calendar.HOUR_OF_DAY, time[0]);
+        pendingDate.set(Calendar.MINUTE, time[1]);
+        pendingDate.set(Calendar.SECOND, 0);
+
+        long startMillis = pendingDate.getTimeInMillis();
+        long endMillis = startMillis + 60 * 60 * 1000; // 1 hour duration
+
+        insertCalendarEvent(pendingTitle, startMillis, endMillis, null, callback);
+    }
+
+    private void createEverydayReminder(int[] time, CommandRouter.CommandCallback callback) {
+        Calendar cal = Calendar.getInstance();
+        cal.set(Calendar.HOUR_OF_DAY, time[0]);
+        cal.set(Calendar.MINUTE, time[1]);
+        cal.set(Calendar.SECOND, 0);
+
+        if (cal.getTimeInMillis() < System.currentTimeMillis()) {
+            cal.add(Calendar.DAY_OF_YEAR, 1);
+        }
+
+        long startMillis = cal.getTimeInMillis();
+        long endMillis = startMillis + 60 * 60 * 1000;
+
+        insertCalendarEvent(pendingTitle, startMillis, endMillis, "FREQ=DAILY", callback);
+    }
+
+    private boolean hasCalendarPermissions() {
+        return ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_CALENDAR) == PackageManager.PERMISSION_GRANTED
+            && ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CALENDAR) == PackageManager.PERMISSION_GRANTED;
+    }
+
+    private void insertCalendarEvent(String title, long startMillis, long endMillis, String rrule, CommandRouter.CommandCallback callback) {
+        if (!hasCalendarPermissions()) {
+            AppLogger.e(TAG, "Calendar permissions missing, opening settings");
+            String msg = "Calendar permissions are required to automatically create reminders. Please grant them in the settings that just opened.";
+            tts.speak(msg);
+            callback.onResult(msg);
+
+            Intent intent = new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+            intent.setData(android.net.Uri.parse("package:" + context.getPackageName()));
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            context.startActivity(intent);
+            return;
+        }
+
+        try {
+            ContentValues values = new ContentValues();
+            values.put(CalendarContract.Events.DTSTART, startMillis);
+            values.put(CalendarContract.Events.DTEND, endMillis);
+            values.put(CalendarContract.Events.TITLE, title);
+            values.put(CalendarContract.Events.CALENDAR_ID, getDefaultCalendarId());
+            values.put(CalendarContract.Events.EVENT_TIMEZONE, TimeZone.getDefault().getID());
+            values.put(CalendarContract.Events.HAS_ALARM, 1);
+            if (rrule != null) {
+                values.put(CalendarContract.Events.RRULE, rrule);
+            }
+
+            android.net.Uri uri = context.getContentResolver().insert(CalendarContract.Events.CONTENT_URI, values);
+            if (uri != null) {
+                // Add an alert for this event
+                long eventID = Long.parseLong(uri.getLastPathSegment());
+                ContentValues reminderValues = new ContentValues();
+                reminderValues.put(CalendarContract.Reminders.EVENT_ID, eventID);
+                reminderValues.put(CalendarContract.Reminders.MINUTES, 0); // At the time of event
+                reminderValues.put(CalendarContract.Reminders.METHOD, CalendarContract.Reminders.METHOD_ALERT); // Triggers the default calendar notification sound
+                context.getContentResolver().insert(CalendarContract.Reminders.CONTENT_URI, reminderValues);
+
+                String msg = "Reminder created successfully for " + title + ".";
+                tts.speak(msg);
+                callback.onResult(msg);
+            } else {
+                throw new Exception("Failed to insert event.");
+            }
+        } catch (SecurityException e) {
+            AppLogger.e(TAG, "Calendar permission missing", e);
+            fallbackToCalendarIntent(title, startMillis, endMillis, callback);
+        } catch (Exception e) {
+            AppLogger.e(TAG, "Error inserting calendar event", e);
+            fallbackToCalendarIntent(title, startMillis, endMillis, callback);
+        }
+    }
+
+    private long getDefaultCalendarId() {
+        String[] projection = new String[]{CalendarContract.Calendars._ID};
+        android.database.Cursor cursor = context.getContentResolver().query(
+                CalendarContract.Calendars.CONTENT_URI,
+                projection,
+                CalendarContract.Calendars.VISIBLE + " = 1 AND " + CalendarContract.Calendars.IS_PRIMARY + " = 1",
+                null,
+                CalendarContract.Calendars._ID + " ASC");
+
+        if (cursor != null) {
+            if (cursor.moveToFirst()) {
+                long id = cursor.getLong(0);
+                cursor.close();
+                return id;
+            }
+            cursor.close();
+        }
+
+        // Fallback: just get the first visible calendar
+        cursor = context.getContentResolver().query(
+                CalendarContract.Calendars.CONTENT_URI,
+                projection,
+                CalendarContract.Calendars.VISIBLE + " = 1",
+                null,
+                CalendarContract.Calendars._ID + " ASC");
+
+        if (cursor != null) {
+            if (cursor.moveToFirst()) {
+                long id = cursor.getLong(0);
+                cursor.close();
+                return id;
+            }
+            cursor.close();
+        }
+        return 1; // Last resort default
+    }
+
+    private void fallbackToCalendarIntent(String title, long startMillis, long endMillis, CommandRouter.CommandCallback callback) {
         Intent intent = new Intent(Intent.ACTION_INSERT);
         intent.setData(CalendarContract.Events.CONTENT_URI);
         if (!title.isEmpty()) {
             intent.putExtra(CalendarContract.Events.TITLE, title);
-            // Default to 1 hour from now
-            long now = System.currentTimeMillis();
-            intent.putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, now + 60 * 60 * 1000);
-            intent.putExtra(CalendarContract.EXTRA_EVENT_END_TIME, now + 2 * 60 * 60 * 1000);
         }
+        intent.putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, startMillis);
+        intent.putExtra(CalendarContract.EXTRA_EVENT_END_TIME, endMillis);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
         try {
             context.startActivity(intent);
-            String msg = title.isEmpty()
-                    ? "Opening your calendar."
-                    : "Opening calendar to create event: " + title;
+            String msg = "Opening calendar to save reminder.";
             tts.speak(msg);
             callback.onResult(msg);
-        } catch (Exception e) {
-            AppLogger.e(TAG, "Calendar intent failed", e);
-            // Fallback: open calendar app with a VIEW intent
-            try {
-                long now = System.currentTimeMillis();
-                Intent viewIntent = new Intent(Intent.ACTION_VIEW);
-                viewIntent.setData(android.net.Uri.parse("content://com.android.calendar/time/" + now));
-                viewIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                context.startActivity(viewIntent);
-                String msg = "Opening your calendar.";
-                tts.speak(msg);
-                callback.onResult(msg);
-            } catch (Exception ex) {
-                String msg = "Sorry, I could not open the calendar.";
-                tts.speak(msg);
-                callback.onResult(msg);
-            }
+        } catch (Exception ex) {
+            AppLogger.e(TAG, "Calendar fallback failed", ex);
+            String msg = "Sorry, I could not save the reminder.";
+            tts.speak(msg);
+            callback.onResult(msg);
         }
     }
 
     // ─── Helpers ────────────────────────────────────────────────────────────
+
+    /**
+     * Parses a natural language date string into a Calendar object.
+     */
+    private Calendar parseDate(String text) {
+        String t = text.toLowerCase().trim();
+        Calendar cal = Calendar.getInstance();
+
+        if (t.contains("tomorrow")) {
+            cal.add(Calendar.DAY_OF_YEAR, 1);
+            return cal;
+        }
+        if (t.contains("today")) {
+            return cal;
+        }
+
+        String[] days = {"sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"};
+        for (int i = 0; i < days.length; i++) {
+            if (t.contains(days[i])) {
+                int targetDay = i + 1; // Calendar.SUNDAY = 1
+                int currentDay = cal.get(Calendar.DAY_OF_WEEK);
+                int daysToAdd = targetDay - currentDay;
+                if (daysToAdd <= 0) {
+                    daysToAdd += 7;
+                }
+                cal.add(Calendar.DAY_OF_YEAR, daysToAdd);
+                return cal;
+            }
+        }
+
+        // Basic check for specific dates like "15th" or "15"
+        Pattern p = Pattern.compile("\\b(\\d{1,2})(?:st|nd|rd|th)?\\b");
+        Matcher m = p.matcher(t);
+        if (m.find()) {
+            int day = Integer.parseInt(m.group(1));
+            if (day >= 1 && day <= 31) {
+                int currentDay = cal.get(Calendar.DAY_OF_MONTH);
+                if (day < currentDay) {
+                    cal.add(Calendar.MONTH, 1);
+                }
+                cal.set(Calendar.DAY_OF_MONTH, day);
+                return cal;
+            }
+        }
+
+        // Default if unable to parse accurately (fallback to today)
+        return cal;
+    }
 
     /**
      * Parses hour and minute from text. Returns int[]{hour24, minute} or null.
@@ -187,13 +426,35 @@ public class SchedulerCommands {
                 || t.contains("night") || t.contains("afternoon");
         boolean am = t.contains("am") || t.contains("a.m") || t.contains("morning");
 
-        // Pattern e.g. "7:30", "6 30", "7"
-        Pattern p = Pattern.compile("(\\d{1,2})(?:[:\\s](\\d{2}))?");
-        Matcher m = p.matcher(t);
-        if (m.find()) {
-            int hour = Integer.parseInt(m.group(1));
-            int minute = (m.group(2) != null) ? Integer.parseInt(m.group(2)) : 0;
+        int hour = -1;
+        int minute = 0;
 
+        // Try standard format with separator: "7:30", "7 30"
+        Pattern p1 = Pattern.compile("(\\d{1,2})[:\\s](\\d{2})");
+        Matcher m1 = p1.matcher(t);
+        if (m1.find()) {
+            hour = Integer.parseInt(m1.group(1));
+            minute = Integer.parseInt(m1.group(2));
+        } else {
+            // No separator, extract digits to handle speech-to-text clumping like "742" for 7:42
+            Pattern p2 = Pattern.compile("\\d+");
+            Matcher m2 = p2.matcher(t);
+            if (m2.find()) {
+                String digits = m2.group();
+                if (digits.length() == 3) {
+                    hour = Integer.parseInt(digits.substring(0, 1));
+                    minute = Integer.parseInt(digits.substring(1, 3));
+                } else if (digits.length() == 4) {
+                    hour = Integer.parseInt(digits.substring(0, 2));
+                    minute = Integer.parseInt(digits.substring(2, 4));
+                } else if (digits.length() <= 2) {
+                    hour = Integer.parseInt(digits);
+                    minute = 0;
+                }
+            }
+        }
+
+        if (hour != -1) {
             if (pm && hour < 12) hour += 12;
             if (am && hour == 12) hour = 0;
 

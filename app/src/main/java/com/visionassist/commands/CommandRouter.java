@@ -323,7 +323,15 @@ public class CommandRouter {
     private VoiceCommand classify(String text) {
         String t = text.toLowerCase().trim();
 
-        // ── Check for pending contact state first ─────────────────────────
+        // ── Check for pending state first ─────────────────────────
+        if (schedulerCommands.hasPendingReminderState()) {
+            if (t.equals("cancel") || t.equals("stop") || t.equals("nevermind")) {
+                schedulerCommands.cancelPendingReminder();
+                return new VoiceCommand(text, VoiceCommand.CommandType.STOP);
+            }
+            return new VoiceCommand(text, VoiceCommand.CommandType.CREATE_CALENDAR_EVENT);
+        }
+
         if (phoneCommands.hasPendingContacts()) {
             if (t.contains("option") || t.contains("number") || t.contains("choice") ||
                 t.matches(".*\\bone\\b.*") || t.matches(".*\\btwo\\b.*") ||

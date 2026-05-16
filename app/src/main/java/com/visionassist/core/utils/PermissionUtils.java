@@ -43,10 +43,16 @@ public final class PermissionUtils {
         return true; // Auto-granted on older API
     }
 
+    public static boolean hasCalendarPermission(Context context) {
+        return hasPermission(context, Manifest.permission.READ_CALENDAR) &&
+               hasPermission(context, Manifest.permission.WRITE_CALENDAR);
+    }
+
     public static boolean hasAllCriticalPermissions(Context context) {
         return hasMicrophonePermission(context)
                 && hasCameraPermission(context)
-                && hasContactsPermission(context);
+                && hasContactsPermission(context)
+                && hasCalendarPermission(context);
     }
 
     public static String[] getAllRequiredPermissions() {
@@ -58,7 +64,9 @@ public final class PermissionUtils {
                     Manifest.permission.READ_CONTACTS,
                     Manifest.permission.SEND_SMS,
                     Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.POST_NOTIFICATIONS
+                    Manifest.permission.POST_NOTIFICATIONS,
+                    Manifest.permission.READ_CALENDAR,
+                    Manifest.permission.WRITE_CALENDAR
             };
         } else {
             return new String[]{
@@ -67,7 +75,9 @@ public final class PermissionUtils {
                     Manifest.permission.CALL_PHONE,
                     Manifest.permission.READ_CONTACTS,
                     Manifest.permission.SEND_SMS,
-                    Manifest.permission.ACCESS_FINE_LOCATION
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.READ_CALENDAR,
+                    Manifest.permission.WRITE_CALENDAR
             };
         }
     }

@@ -85,11 +85,13 @@ Uses standard Android **Geo Intents** — works with Google Maps, OsmAnd, or any
 ---
 
 ### 📅 Calendar & Reminders
+Provides an interactive, multi-step voice flow to set up reminders. The assistant will ask for the required details and save the reminder directly to your calendar, completely hands-free.
+
 | Voice Command | What Happens |
 |---|---|
-| `Create calendar event for doctor appointment` | Opens Calendar with the title filled in |
-| `Add reminder for team meeting` | Same |
-| `Open my calendar` | Opens the calendar app |
+| `Add reminder for team meeting` | Assistant asks if it's "everyday or just once", asks for the date and time, and silently saves the alarm to your calendar. |
+| `Schedule an event` | Starts the same interactive reminder setup flow. |
+| `Create a reminder` | Assistant asks for repetition, date, and time before confirming creation. |
 
 ---
 

@@ -43,6 +43,7 @@ public class VoiceCommand {
         SET_ALARM,
         SET_TIMER,
         CREATE_CALENDAR_EVENT,
+        ADD_MEMO,
         WEB_SEARCH,
         WEATHER_CHECK,
         NEWS_CHECK,

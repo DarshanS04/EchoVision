@@ -33,6 +33,11 @@ public class SchedulerCommands {
     private boolean isEveryday = false;
     private Calendar pendingDate = null;
 
+    private enum MemoState { NONE, AWAITING_COUNT, AWAITING_TIME }
+    private MemoState currentMemoState = MemoState.NONE;
+    private int expectedMemoTimes = 0;
+    private int currentMemoIndex = 0;
+
     public SchedulerCommands(Context context) {
         this.context = context.getApplicationContext();
         this.tts = TTSManager.getInstance(context);
@@ -88,6 +93,105 @@ public class SchedulerCommands {
             String msg = "Sorry, I could not set the alarm.";
             tts.speak(msg);
             callback.onResult(msg);
+        }
+    }
+
+    // ─── Memos (Repeating Alarms) ───────────────────────────────────────────
+
+    public boolean hasPendingMemoState() {
+        return currentMemoState != MemoState.NONE;
+    }
+
+    public void cancelPendingMemo() {
+        currentMemoState = MemoState.NONE;
+        expectedMemoTimes = 0;
+        currentMemoIndex = 0;
+    }
+
+    /**
+     * Interactive flow for creating multiple daily repeating alarms (e.g., for taking tablets).
+     */
+    public void startMemoFlow(String rawText, CommandRouter.CommandCallback callback) {
+        if (currentMemoState != MemoState.NONE) {
+            handlePendingMemo(rawText, callback);
+            return;
+        }
+
+        currentMemoState = MemoState.AWAITING_COUNT;
+        String msg = "For a day, how many times should I remind you?";
+        tts.speak(msg);
+        callback.onResult(msg);
+    }
+
+    private void handlePendingMemo(String rawText, CommandRouter.CommandCallback callback) {
+        switch (currentMemoState) {
+            case AWAITING_COUNT:
+                int count = parseNumber(rawText);
+                if (count > 0 && count <= 10) {
+                    expectedMemoTimes = count;
+                    currentMemoIndex = 1;
+                    currentMemoState = MemoState.AWAITING_TIME;
+                    String msg = "What time should I remind you for time " + currentMemoIndex + "?";
+                    tts.speak(msg);
+                    callback.onResult(msg);
+                } else {
+                    tts.speak("Please say a valid number, like 2 or 3.");
+                    callback.onResult("Please say a valid number.");
+                }
+                break;
+
+            case AWAITING_TIME:
+                int[] time = parseTime(rawText);
+                if (time != null) {
+                    createRepeatingMemoAlarm(time);
+                    
+                    if (currentMemoIndex < expectedMemoTimes) {
+                        currentMemoIndex++;
+                        String msg = "What time should I remind you for time " + currentMemoIndex + "?";
+                        tts.speak(msg);
+                        callback.onResult(msg);
+                    } else {
+                        cancelPendingMemo();
+                        String msg = "All daily memo alarms have been set successfully.";
+                        tts.speak(msg);
+                        callback.onResult(msg);
+                    }
+                } else {
+                    tts.speak("I didn't catch the time. Please say a time like 10 AM or 5 30 PM.");
+                    callback.onResult("I didn't catch the time.");
+                }
+                break;
+
+            default:
+                cancelPendingMemo();
+                break;
+        }
+    }
+
+    private void createRepeatingMemoAlarm(int[] time) {
+        Intent intent = new Intent(AlarmClock.ACTION_SET_ALARM);
+        intent.putExtra(AlarmClock.EXTRA_HOUR, time[0]);
+        intent.putExtra(AlarmClock.EXTRA_MINUTES, time[1]);
+        
+        java.util.ArrayList<Integer> days = new java.util.ArrayList<>();
+        days.add(Calendar.MONDAY);
+        days.add(Calendar.TUESDAY);
+        days.add(Calendar.WEDNESDAY);
+        days.add(Calendar.THURSDAY);
+        days.add(Calendar.FRIDAY);
+        days.add(Calendar.SATURDAY);
+        days.add(Calendar.SUNDAY);
+        
+        intent.putExtra(AlarmClock.EXTRA_DAYS, days);
+        intent.putExtra(AlarmClock.EXTRA_MESSAGE, "Daily Memo");
+        intent.putExtra(AlarmClock.EXTRA_SKIP_UI, true);
+        intent.putExtra(AlarmClock.EXTRA_VIBRATE, true);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        
+        try {
+            context.startActivity(intent);
+        } catch (Exception e) {
+            AppLogger.e(TAG, "Failed to start Alarm intent for memo", e);
         }
     }
 
@@ -503,5 +607,20 @@ public class SchedulerCommands {
                 .replace("create", "").replace("add", "").replace("new", "")
                 .replace("calendar", "").replace("event", "").replace("reminder", "")
                 .replace("schedule", "").replace("for", "").trim();
+    }
+
+    private int parseNumber(String text) {
+        String t = text.toLowerCase().trim();
+        if (t.contains("one") || t.contains("1") || t.contains("once")) return 1;
+        if (t.contains("two") || t.contains("2") || t.contains("twice")) return 2;
+        if (t.contains("three") || t.contains("3")) return 3;
+        if (t.contains("four") || t.contains("4")) return 4;
+        if (t.contains("five") || t.contains("5")) return 5;
+        if (t.contains("six") || t.contains("6")) return 6;
+        if (t.contains("seven") || t.contains("7")) return 7;
+        if (t.contains("eight") || t.contains("8")) return 8;
+        if (t.contains("nine") || t.contains("9")) return 9;
+        if (t.contains("ten") || t.contains("10")) return 10;
+        return -1;
     }
 }

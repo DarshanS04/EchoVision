@@ -140,6 +140,10 @@ public class CommandRouter {
                 schedulerCommands.createCalendarEvent(rawText, callback);
                 break;
 
+            case ADD_MEMO:
+                schedulerCommands.startMemoFlow(rawText, callback);
+                break;
+
             // ── Navigation / Nearby ─────────────────────────────────────────
             case NAVIGATE:
                 // First try ExternalNavigationCommands (no API key needed)
@@ -324,6 +328,14 @@ public class CommandRouter {
         String t = text.toLowerCase().trim();
 
         // ── Check for pending state first ─────────────────────────
+        if (schedulerCommands.hasPendingMemoState()) {
+            if (t.equals("cancel") || t.equals("stop") || t.equals("nevermind")) {
+                schedulerCommands.cancelPendingMemo();
+                return new VoiceCommand(text, VoiceCommand.CommandType.STOP);
+            }
+            return new VoiceCommand(text, VoiceCommand.CommandType.ADD_MEMO);
+        }
+
         if (schedulerCommands.hasPendingReminderState()) {
             if (t.equals("cancel") || t.equals("stop") || t.equals("nevermind")) {
                 schedulerCommands.cancelPendingReminder();
@@ -393,6 +405,9 @@ public class CommandRouter {
         if (t.contains(AppConstants.CMD_CALENDAR) || t.contains(AppConstants.CMD_REMINDER) ||
                 t.contains(AppConstants.CMD_EVENT) || t.contains(AppConstants.CMD_SCHEDULE)) {
             return new VoiceCommand(text, VoiceCommand.CommandType.CREATE_CALENDAR_EVENT);
+        }
+        if (t.contains("memo") || t.contains("add memo") || t.contains("medication reminder")) {
+            return new VoiceCommand(text, VoiceCommand.CommandType.ADD_MEMO);
         }
 
         // ── Navigation / Nearby ───────────────────────────────────────────

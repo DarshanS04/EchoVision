@@ -36,6 +36,7 @@
         android:layout_margin="16dp"
         android:background="#222222"
         android:scaleType="fitCenter"
+        android:rotation="90"
         app:layout_constraintTop_toBottomOf="@id/connection_status"
         app:layout_constraintBottom_toTopOf="@id/back_button"
         app:layout_constraintStart_toStartOf="parent"

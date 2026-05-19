@@ -38,7 +38,7 @@ public class AudioStreamer {
     private void initPlayer() {
         int minBufSize = AudioTrack.getMinBufferSize(SAMPLE_RATE, CHANNEL_CONFIG_OUT, AUDIO_FORMAT);
         mAudioTrack = new AudioTrack(
-                AudioManager.STREAM_VOICE_CALL,
+                AudioManager.STREAM_MUSIC,
                 SAMPLE_RATE,
                 CHANNEL_CONFIG_OUT,
                 AUDIO_FORMAT,
